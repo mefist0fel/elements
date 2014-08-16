@@ -1,4 +1,4 @@
-function Input(rect) {
+function Input(rect, canvasElement) {
 	var KEY = {
 		BACKSPACE: 8,
 		TAB:       9,	RETURN:   13,
@@ -14,13 +14,16 @@ function Input(rect) {
 	};
 
 	var input = {
-		keys: [200],
+		key: [200],
 		mouseLeft: false,
 		mousePosition: [0, 0]
 	}
+	for(var i = 0; i < 200; i++) {
+		input.key[i] = false;
+	}
 
 	function setKey(keyCode, value) {
-		input.keys[keyCode] = value;
+		input.key[keyCode] = value;
 	}
 
 	function onkeydown(event) {
