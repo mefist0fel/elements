@@ -1,6 +1,6 @@
 <html>
 	<head>
-		<title>Canvas loop</title>
+		<title>Elements prot</title>
 		<style type="text/css">
 		body {
 			display: block;
@@ -35,8 +35,10 @@
 
 	function GameObject() {
 		var obj = {
+			active: false,
 			position: [0, 0],
 			velocity: [0, 0],
+			life: 100,
 			radius: 20
 		}
 		return obj;
@@ -57,6 +59,17 @@
 		bullet[i] = GameObject();
 	}
 
+	function fire(position, velocity) {
+		for(var i = 0; i < 200; i++) {
+			if (!bullet[i].active) {
+				bullet[i].active = true;
+				bullet[i].position = position;
+				bullet[i].velocity = vMult(vAdd(velocity, [Math.random() * 0.1 - 0.05, Math.random() * 0.1 - 0.05]), 400);
+				bullet[i].life = 3; // 3 sec life
+				break;
+			}
+		}
+	}
 	function timestamp() {
 		return window.performance && window.performance.now ? window.performance.now() : new Date().getTime();
 	}
@@ -78,6 +91,12 @@
 		canvas.arc(200, 400, 50, 0, 2*Math.PI);
 		canvas.closePath();
 		canvas.stroke();
+		// bullets
+		for(var i = 0; i < 200; i++) {
+			if (bullet[i].active) {
+				canvas.fillRect ( bullet[i].position[0] - 1, bullet[i].position[1] - 1, 2, 2);
+			}
+		}
 	}
 	function update(dt) {
 		// control
@@ -102,6 +121,11 @@
 		if (input.key[39] || input.key[68]) {
 			player.velocity[0] += 100;
 		}
+		// player fire
+		if (input.mouseLeft) {
+			fire(player.position, vNorm(vSub(input.mousePosition, player.position)));
+		}
+		
 		// angles
 		newCoord = vAdd(player.position, vMult(player.velocity, dt));
 		points = [[400, 400], [500, 400], [500, 500], [400, 500]];  // square angles
@@ -132,6 +156,16 @@
 			newCoord = vAdd(newCoord, vMult(vNorm(vSub([200, 400], newCoord)), dist - player.radius - 50));
 		}
 		player.position = newCoord;
+		// bullets
+		for(var i = 0; i < 200; i++) {
+			if (bullet[i].active) {
+				bullet[i].position = vAdd(bullet[i].position, vMult(bullet[i].velocity, dt));
+				bullet[i].life -= dt;
+				if (bullet[i].life < 0) {
+					bullet[i].active = false;
+				}
+			}
+		}
 	}
 	function frame() {
 		now = timestamp();
