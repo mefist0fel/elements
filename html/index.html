@@ -1,0 +1,122 @@
+<html>
+	<head>
+		<title>Canvas loop</title>
+		<style type="text/css">
+		body {
+			display: block;
+			background-color:0;
+			width: 100%;
+			height: 100%;
+			margin: 0;
+		}
+		canvas {
+			background-color:#ffffff;
+			display: block;
+			margin: 0 auto;
+		}
+		</style>
+	</head>
+	<body>
+		<canvas id="tutorial"></canvas>
+	</body>
+	<script type="text/javascript" src="geometry.js"></script>
+	<script type="text/javascript" src="input.js"></script>
+	<script type="text/javascript">
+	var now,
+		dt = 0,
+		time = timestamp(),
+		step = 1/30,
+		ballCoord = [180, 150],
+		ballVelocity = [1, 1],
+		ballRadius = 20,
+		width = 1024,
+		height = 768;
+
+
+	function GameObject() {
+		var obj = {
+			coord: [0, 0],
+			velocity: [0, 0]
+		}
+		return obj;
+	}
+
+	// init
+	var canvasElement = document.getElementById('tutorial');
+	var canvas = canvasElement.getContext('2d');
+	canvasElement.width = width;
+	canvasElement.height = height;
+	rect = canvasElement.getBoundingClientRect();
+
+	var input = Input(rect);
+	var player = GameObject();
+
+
+	function timestamp() {
+		return window.performance && window.performance.now ? window.performance.now() : new Date().getTime();
+	}
+	function render() {
+		// colors of default paint
+		canvas.strokeStyle    = '#000000';  // red
+		// clear
+		canvas.clearRect ( 0, 1, width, height);
+		canvas.fillStyle= '#FF0000';  // red
+		// circle - hero
+		canvas.beginPath();
+		canvas.arc(ballCoord[0], ballCoord[1], ballRadius, 0, 2*Math.PI);
+		canvas.closePath();
+		canvas.fill();
+		// quad
+		canvas.strokeRect ( 400, 400, 100, 100);
+		// circle
+		canvas.beginPath();
+		canvas.arc(200, 400, 50, 0, 2*Math.PI);
+		canvas.closePath();
+		canvas.stroke();
+	}
+	function update(dt) {
+		// angles
+		newCoord = vAdd(ballCoord, vMult(ballVelocity, dt));
+		points = [[400, 400], [500, 400], [500, 500], [400, 500]];  // square angles
+		for(var i = 0; i < 4; i++) {
+			dist = magnitude(newCoord, points[i]);
+			if (dist <= ballRadius) {
+				newCoord = vAdd(newCoord, vMult(vNorm(vSub(points[i], newCoord)), dist - ballRadius));
+			}
+		}
+		//sides
+		if (vInRect(newCoord, [400 - ballRadius, 400, 500 + ballRadius, 500])) {
+			if (newCoord[0] < 450) {
+				newCoord[0] = 400 - ballRadius;
+			} else {
+				newCoord[0] = 500 + ballRadius;
+			}
+		}
+		if (vInRect(newCoord, [400, 400 - ballRadius, 500, 500 + ballRadius])) {
+			if (newCoord[1] < 450) {
+				newCoord[1] = 400 - ballRadius;
+			} else {
+				newCoord[1] = 500 + ballRadius;
+			}
+		}
+		// circle
+		dist = magnitude(newCoord, [200, 400]);
+		if (dist < ballRadius + 50) {
+			newCoord = vAdd(newCoord, vMult(vNorm(vSub([200, 400], newCoord)), dist - ballRadius - 50));
+		}
+		ballCoord = newCoord;
+	}
+	function frame() {
+		now = timestamp();
+		dt = dt + Math.min(1, (now - time) / 1000);
+		if (dt > step) {
+			dt = step;
+		}
+		update(step);
+		render();
+		time = now;
+		requestAnimationFrame(frame);
+	}
+	requestAnimationFrame(frame);
+	</script>
+</html>
