@@ -22,6 +22,22 @@
 	<script type="text/javascript" src="geometry.js"></script>
 	<script type="text/javascript" src="input.js"></script>
 	<script type="text/javascript">
+	var map = [	0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,
+				0,1,1,0,0,1,0,0,0,1,1,0,0,1,0,0,
+				1,1,1,0,1,0,0,0,1,1,1,0,1,0,0,0,
+				0,0,0,1,1,1,0,0,0,0,0,1,1,1,0,0,
+				0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,
+				0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,
+				0,0,1,1,1,0,0,0,0,0,1,1,1,0,0,0,
+				0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,
+				0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,
+				0,1,1,0,0,1,0,0,0,1,1,0,0,1,0,0,
+				1,1,1,0,1,0,0,0,1,1,1,0,1,0,0,0,
+				0,0,0,1,1,1,0,0,0,0,0,1,1,1,0,0,
+				0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,
+				0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,
+				0,0,1,1,1,0,0,0,0,0,1,1,1,0,0,0,
+				0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0];
 	var now,
 		dt = 0,
 		time = timestamp(),
@@ -73,11 +89,49 @@
 	function timestamp() {
 		return window.performance && window.performance.now ? window.performance.now() : new Date().getTime();
 	}
+	function drawTile(x, y) {
+		var size = 40;
+		var height = 40;
+		xp = x * size * 2 - y * size * 2;
+		yp = x * size + y * size;
+		canvas.fillStyle    = '#eeeeee';  // gray
+		canvas.beginPath(); // top
+		canvas.moveTo(xp, yp);
+		canvas.lineTo(xp + size * 2, yp + size);
+		canvas.lineTo(xp, yp + size * 2);
+		canvas.lineTo(xp - size * 2, yp + size);
+		canvas.closePath(); // make line to first point
+		canvas.fill();
+		canvas.fillStyle    = '#cccccc';  // gray
+		canvas.beginPath(); // side 1
+		canvas.moveTo(xp + size * 2, yp + size);
+		canvas.lineTo(xp, yp + size * 2);
+		canvas.lineTo(xp, yp + size * 2 + height);
+		canvas.lineTo(xp + size * 2, yp + size + height);
+		canvas.closePath(); // make line to first point
+		canvas.fill();
+		canvas.fillStyle    = '#dddddd';  // gray
+		canvas.beginPath(); // side 2
+		canvas.moveTo(xp - size * 2, yp + size);
+		canvas.lineTo(xp, yp + size * 2);
+		canvas.lineTo(xp, yp + size * 2 + height);
+		canvas.lineTo(xp - size * 2, yp + size + height);
+		canvas.closePath(); // make line to first point
+		canvas.fill();
+	}
 	function render() {
-		// colors of default paint
-		canvas.strokeStyle    = '#000000';  // red
 		// clear
 		canvas.clearRect ( 0, 0, width, height);
+		// map
+		for(var i = 0; i < 16; i ++) {
+			for(var j = 0; j < 16; j ++) {
+				if (map[i * 16 + j] == 1) {
+					drawTile(i, j);
+				}
+			}
+		}
+		// colors of default paint
+		canvas.strokeStyle    = '#000000';  // red
 		canvas.fillStyle= '#FF0000';  // red
 		// circle - hero
 		canvas.beginPath();
