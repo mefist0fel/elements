@@ -1,0 +1,384 @@
+<html>
+	<head>
+		<title>Elements prot</title>
+		<style type="text/css">
+		body {
+			display: block;
+			background-color:0;
+			width: 100%;
+			height: 100%;
+			margin: 0;
+		}
+		canvas {
+			background-color:#ffffff;
+			display: block;
+			margin: 0px auto;
+		}
+		</style>
+	</head>
+	<body>
+		<canvas id="tutorial"></canvas>
+	</body>
+	<script type="text/javascript">// basic vector2[x, y] functons
+function vAdd(av, bv) {
+	return [av[0] + bv[0], av[1] + bv[1],  av[2] + bv[2]];
+}
+function vSub(av, bv) {
+	return [av[0] - bv[0], av[1] - bv[1], av[2] - bv[2]];
+}
+function magnitude(va, vb) {
+	return Math.sqrt((va[0] - vb[0]) * (va[0] - vb[0]) + (va[1] - vb[1]) * (va[1] - vb[1]));
+}
+function vNorm(v) { // normilize
+	return vMult(v, 1 / magnitude(v, [0, 0, 0]));
+}
+function vMult(v, m) { // m - float
+	return [v[0] * m, v[1] * m, v[2] * m];
+}
+function vInRect(v, rect) { // rect is arr[4] description of AABB rect
+	return (v[0] >= rect[0] && v[0] <= rect[2] && v[1] >= rect[1] && v[1] <= rect[3]);
+}function Input(rect, canvasElement) {
+	//  KEY KODES
+	//	BACKSPACE: 8,
+	//	TAB:       9,	RETURN:   13,
+	//	ESC:      27,	SPACE:    32,
+	//	PAGEUP:   33,	PAGEDOWN: 34,
+	//	END:      35,	HOME:     36,
+	//	LEFT:     37,	UP:       38,
+	//	RIGHT:    39,	DOWN:     40,
+	//	INSERT:   45,	DELETE:   46,
+	//	ZERO:     48, ONE: 49, TWO: 50, THREE: 51, FOUR: 52, FIVE: 53, SIX: 54, SEVEN: 55, EIGHT: 56, NINE: 57,
+	//	A:        65, B: 66, C: 67, D: 68, E: 69, F: 70, G: 71, H: 72, I: 73, J: 74, K: 75, L: 76, M: 77, N: 78, O: 79, P: 80, Q: 81, R: 82, S: 83, T: 84, U: 85, V: 86, W: 87, X: 88, Y: 89, Z: 90,
+	//	TILDA:    192
+
+	var input = {
+		key: [200],
+		mouseLeft: false,
+		mousePosition: [0, 0]
+	}
+	for(var i = 0; i < 200; i++) {
+		input.key[i] = false;
+	}
+
+	function setKey(keyCode, value) {
+		input.key[keyCode] = value;
+	}
+
+	function onkeydown(event) {
+		setKey(event.keyCode, true);
+	}
+	function onkeyup(event) {
+		setKey(event.keyCode, false);
+	}
+
+	function onclick(event) {
+		//ballCoord[0] = event.clientX - rect.left;
+		//ballCoord[1] = event.clientY - rect.top;
+	}
+
+	function mousedown(event) {
+		input.mouseLeft = true;
+	}
+
+	function mouseup(event) {
+		input.mouseLeft = false;
+	}
+
+	function mousemove(event) {
+		input.mousePosition[0] = event.clientX - rect.left;
+		input.mousePosition[1] = event.clientY - rect.top;
+	}
+
+	function ontouchstart(event) {
+	}
+
+	function ontouchmove(event) {
+	}
+
+	document.addEventListener('keydown',    onkeydown,    false);
+	document.addEventListener('keyup',      onkeyup,      false);
+
+	//canvasElement.addEventListener('click',		onclick,		false);
+	//canvasElement.addEventListener('mousedown', mousedown,		false);
+	//canvasElement.addEventListener('mouseup',	mouseup,		false);
+	//canvasElement.addEventListener('mousemove',	mousemove,		false);
+	//canvasElement.addEventListener('touchstart',ontouchstart,	false);
+	//canvasElement.addEventListener('touchmove',	ontouchmove,	false);
+	document.addEventListener('click',		onclick,		false);
+	document.addEventListener('mousedown', mousedown,		false);
+	document.addEventListener('mouseup',	mouseup,		false);
+	document.addEventListener('mousemove',	mousemove,		false);
+	document.addEventListener('touchstart',ontouchstart,	false);
+	document.addEventListener('touchmove',	ontouchmove,	false);
+	return input;
+}
+	var map = [	1,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,
+				1,2,1,0,0,1,0,0,0,1,1,0,0,1,0,0,
+				1,2,2,1,1,0,0,0,1,1,1,0,1,0,0,0,
+				1,1,1,1,1,1,0,0,0,0,0,1,1,1,0,0,
+				0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,
+				0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,
+				0,0,1,1,1,0,0,0,0,0,1,1,1,0,0,0,
+				0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,
+				0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,
+				0,1,1,0,0,1,0,0,0,1,1,0,0,1,0,0,
+				1,1,1,0,1,0,0,0,1,1,1,0,1,0,0,0,
+				0,0,0,1,1,1,0,0,0,0,0,1,1,1,0,0,
+				0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,
+				0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,
+				0,0,1,1,1,0,0,0,0,0,1,1,1,0,0,0,
+				0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0];
+	var now,
+		dt = 0,
+		time = timestamp(),
+		step = 1/30,
+		ballRadius = 20,
+		width = 1024,
+		height = 768;
+	var
+		cameraPosition = [0, 0, 0];
+
+
+	function GameObject() {
+		var obj = {
+			active: false,
+			position: [0, 0, 0],
+			velocity: [0, 0, 0],
+			life: 100,
+			radius: 20
+		}
+		return obj;
+	}
+
+	// init
+	var canvasElement = document.getElementById('tutorial');
+	var canvas = canvasElement.getContext('2d');
+	canvasElement.width = width;
+	canvasElement.height = height;
+	rect = canvasElement.getBoundingClientRect();
+
+	var input = Input(rect, canvasElement);
+	var player = GameObject();
+	player.position = [3, 3, 0.3];
+	var bullet = [200];
+	for(var i = 0; i < 200; i++) {
+		bullet[i] = GameObject();
+	}
+
+	function fire(position, velocity) {
+		for(var i = 0; i < 200; i++) {
+			if (!bullet[i].active) {
+				bullet[i].active = true;
+				bullet[i].position = position;
+				bullet[i].velocity = vMult(vAdd(velocity, [Math.random() * 0.1 - 0.05, Math.random() * 0.1 - 0.05, 0]), 400);
+				bullet[i].life = 3; // 3 sec life
+				break;
+			}
+		}
+	}
+	function timestamp() {
+		return window.performance && window.performance.now ? window.performance.now() : new Date().getTime();
+	}
+	function toScreenSpace(position) { // array [x, y, z]
+		var sizeX = 70.0;
+		var sizeY = 40.0;
+		var height = 70.0;
+		return [position[0] * sizeX - position[1] * sizeX + width * 0.5, position[0] * sizeY + position[1] * sizeY - position[2] * height];
+	}
+
+	function drawQuad(point) { // array 4 of [x, y, z]
+		canvas.beginPath(); // top
+		var coords = toScreenSpace(point[0]);
+		canvas.moveTo(coords[0], coords[1]);
+		coords = toScreenSpace(point[1]);
+		canvas.lineTo(coords[0], coords[1]);
+		coords = toScreenSpace(point[2]);
+		canvas.lineTo(coords[0], coords[1]);
+		coords = toScreenSpace(point[3]);
+		canvas.lineTo(coords[0], coords[1]);
+		canvas.closePath(); // make line to first point
+		canvas.fill();
+		canvas.stroke();
+	}
+
+	function grayScale(a) {
+		return 'rgba(' + a + ',' + a + ',' + a +',1)';  // white
+	}
+
+	function drawTile(x, y, z) {
+		var size = 40;
+		var height = 40;
+		if ((x + y) % 2 > 0.5) {
+			canvas.fillStyle    = grayScale(240 + z * 10);  // gray
+		} else {
+			canvas.fillStyle    = grayScale(230 + z * 10);  // gray
+		}
+		canvas.strokeStyle = canvas.fillStyle;
+		drawQuad([
+			[x, y, z], [x + 1, y, z],
+			[x + 1, y + 1, z], [x, y + 1, z]
+		]);
+		canvas.fillStyle    = '#cccccc';  // gray
+		// side 1
+		drawQuad([
+			[x + 1, y, z], [x + 1, y + 1, z], [x + 1, y + 1, -1], [x + 1, y, -1]
+		]);
+		canvas.fillStyle    = '#dddddd';  // gray
+		// side 2
+		drawQuad([
+			[x, y + 1, z], [x + 1, y + 1, z], [x + 1, y + 1, -1], [x, y + 1, -1]
+		]);
+		canvas.fill();
+	}
+	function render() {
+		// clear
+		canvas.fillStyle    = '#000000';  // black
+		canvas.fillRect ( 0, 0, width, height);
+		// map
+		for(var i = 0; i < 16; i ++) {
+			for(var j = 0; j < 16; j ++) {
+				if (map[i * 16 + j] > 0) {
+					drawTile(i, j, map[i * 16 + j] - 1);
+				}
+			}
+		}
+		// colors of default paint
+		canvas.strokeStyle    = '#000000';  // red
+		// hero shadow
+		canvas.fillStyle= 'rgba(0,0,0,0.2)';  // white
+		canvas.beginPath();
+		// test
+		canvas.font = "20pt Arial";
+		onMap = [Math.floor(player.position[0]), Math.floor(player.position[1])];
+		canvas.fillText("coord " + onMap[0] + " " + onMap[1] +  " " + map[onMap[0] * 16 + onMap[1]], 10, 30);
+		if (map[onMap[0] * 16 + onMap[1]] >= 1) {
+			var shadowPosition = toScreenSpace([player.position[0], player.position[1], 0]);
+			canvas.arc(shadowPosition[0], shadowPosition[1], Math.max(player.radius * (2 - player.position[2]) * 0.5, 3), 0, 2*Math.PI);
+			canvas.closePath();
+			canvas.fill();
+		}
+		// circle - hero
+		canvas.fillStyle= '#FF0000';  // red
+		canvas.beginPath();
+		var heroPosition = toScreenSpace(player.position);
+		canvas.arc(heroPosition[0], heroPosition[1], player.radius, 0, 2*Math.PI);
+		canvas.closePath();
+		canvas.fill();
+		canvas.fillStyle= '#FFFFFF';  // white
+		canvas.beginPath();
+		heroPosition = toScreenSpace(player.position);
+		canvas.arc(heroPosition[0] + player.radius * 0.3, heroPosition[1] - player.radius * 0.3, player.radius * 0.2, 0, 2*Math.PI);
+		canvas.closePath();
+		canvas.fill();
+		// quad
+		canvas.strokeRect ( 400, 400, 100, 100);
+		// circle
+		canvas.beginPath();
+		canvas.arc(200, 400, 50, 0, 2*Math.PI);
+		canvas.closePath();
+		canvas.stroke();
+		// bullets
+		for(var i = 0; i < 200; i++) {
+			if (bullet[i].active) {
+				canvas.fillRect ( bullet[i].position[0] - 1, bullet[i].position[1] - 1, 2, 2);
+			}
+		}
+	}
+	function update(dt) {
+		// control
+		player.velocity = [0, 0, player.velocity[2]]
+		// UP = 38
+		// DOWN = 40
+		// LEFT = 37
+		// RIGHT = 39
+		// W = 87
+		// S = 83
+		// A = 65
+		// D = 68
+		// space = 32
+		if (input.key[38] || input.key[87]) {
+			player.velocity = vAdd(player.velocity, [-1,-1, 0]);
+			//player.velocity[1] -= 100;
+		}
+		if (input.key[40] || input.key[83]) {
+			player.velocity = vAdd(player.velocity, [+1,+1, 0]);
+			//player.velocity[1] += 100;
+		}
+		if (input.key[37] || input.key[65]) {
+			player.velocity = vAdd(player.velocity, [-1, 1, 0]);
+			//player.velocity[0] -= 100;
+		}
+		if (input.key[39] || input.key[68]) {
+			player.velocity = vAdd(player.velocity, [ 1,-1, 0]);
+			//player.velocity[0] += 100;
+		}
+		if (input.key[32] && player.position[2] <= 0.2) {
+			player.velocity = vAdd(player.velocity, [ 0, 0, 3]);
+			//player.velocity[0] += 100;
+		}
+		// player fire
+		if (input.mouseLeft) {
+			fire(player.position, vNorm(vSub(input.mousePosition, player.position)));
+		}
+		// fall
+		player.velocity[2] -= 3 * dt;
+		
+		// angles
+		newCoord = vAdd(player.position, vMult(player.velocity, dt));
+		points = [[400, 400, 0], [500, 400, 0], [500, 500, 0], [400, 500, 0]];  // square angles
+		for(var i = 0; i < 4; i++) {
+			dist = magnitude(newCoord, points[i]);
+			if (dist <= player.radius) {
+				newCoord = vAdd(newCoord, vMult(vNorm(vSub(points[i], newCoord)), dist - player.radius));
+			}
+		}
+		//sides
+		if (vInRect(newCoord, [400 - player.radius, 400, 500 + player.radius, 500])) {
+			if (newCoord[0] < 450) {
+				newCoord[0] = 400 - player.radius;
+			} else {
+				newCoord[0] = 500 + player.radius;
+			}
+		}
+		if (vInRect(newCoord, [400, 400 - player.radius, 500, 500 + player.radius])) {
+			if (newCoord[1] < 450) {
+				newCoord[1] = 400 - player.radius;
+			} else {
+				newCoord[1] = 500 + player.radius;
+			}
+		}
+		// circle
+		dist = magnitude(newCoord, [200, 400]);
+		if (dist < player.radius + 50) {
+			newCoord = vAdd(newCoord, vMult(vNorm(vSub([200, 400], newCoord)), dist - player.radius - 50));
+		}
+		if (newCoord[2] < 0.2) {
+			player.velocity[2] = 0;
+			newCoord[2] = 0.2;
+		}
+		player.position = newCoord;
+		// bullets
+		for(var i = 0; i < 200; i++) {
+			if (bullet[i].active) {
+				bullet[i].position = vAdd(bullet[i].position, vMult(bullet[i].velocity, dt));
+				bullet[i].life -= dt;
+				if (bullet[i].life < 0) {
+					bullet[i].active = false;
+				}
+			}
+		}
+	}
+	function frame() {
+		now = timestamp();
+		dt = dt + Math.min(1, (now - time) / 1000);
+		if (dt > step) {
+			dt = step;
+		}
+		update(step);
+		render();
+		time = now;
+		requestAnimationFrame(frame);
+	}
+	requestAnimationFrame(frame);
+	</script>
+</html>
