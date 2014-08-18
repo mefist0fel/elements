@@ -12,7 +12,7 @@
 		canvas {
 			background-color:#ffffff;
 			display: block;
-			margin: 10px auto;
+			margin: 0px auto;
 		}
 		</style>
 	</head>
@@ -22,10 +22,10 @@
 	<script type="text/javascript" src="geometry.js"></script>
 	<script type="text/javascript" src="input.js"></script>
 	<script type="text/javascript">
-	var map = [	0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,
-				0,1,1,0,0,1,0,0,0,1,1,0,0,1,0,0,
-				1,1,1,0,1,0,0,0,1,1,1,0,1,0,0,0,
-				0,0,0,1,1,1,0,0,0,0,0,1,1,1,0,0,
+	var map = [	1,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,
+				1,2,1,0,0,1,0,0,0,1,1,0,0,1,0,0,
+				1,2,2,1,1,0,0,0,1,1,1,0,1,0,0,0,
+				1,1,1,1,1,1,0,0,0,0,0,1,1,1,0,0,
 				0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,
 				0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,
 				0,0,1,1,1,0,0,0,0,0,1,1,1,0,0,0,
@@ -42,18 +42,18 @@
 		dt = 0,
 		time = timestamp(),
 		step = 1/30,
-		ballCoord = [180, 150],
-		ballVelocity = [1, 1],
 		ballRadius = 20,
 		width = 1024,
 		height = 768;
+	var
+		cameraPosition = [0, 0, 0];
 
 
 	function GameObject() {
 		var obj = {
 			active: false,
-			position: [0, 0],
-			velocity: [0, 0],
+			position: [0, 0, 0],
+			velocity: [0, 0, 0],
 			life: 100,
 			radius: 20
 		}
@@ -69,7 +69,7 @@
 
 	var input = Input(rect, canvasElement);
 	var player = GameObject();
-	player.position = [100, 100];
+	player.position = [3, 3, 0.3];
 	var bullet = [200];
 	for(var i = 0; i < 200; i++) {
 		bullet[i] = GameObject();
@@ -80,7 +80,7 @@
 			if (!bullet[i].active) {
 				bullet[i].active = true;
 				bullet[i].position = position;
-				bullet[i].velocity = vMult(vAdd(velocity, [Math.random() * 0.1 - 0.05, Math.random() * 0.1 - 0.05]), 400);
+				bullet[i].velocity = vMult(vAdd(velocity, [Math.random() * 0.1 - 0.05, Math.random() * 0.1 - 0.05, 0]), 400);
 				bullet[i].life = 3; // 3 sec life
 				break;
 			}
@@ -89,53 +89,95 @@
 	function timestamp() {
 		return window.performance && window.performance.now ? window.performance.now() : new Date().getTime();
 	}
-	function drawTile(x, y) {
+	function toScreenSpace(position) { // array [x, y, z]
+		var sizeX = 70.0;
+		var sizeY = 40.0;
+		var height = 70.0;
+		return [position[0] * sizeX - position[1] * sizeX + width * 0.5, position[0] * sizeY + position[1] * sizeY - position[2] * height];
+	}
+
+	function drawQuad(point) { // array 4 of [x, y, z]
+		canvas.beginPath(); // top
+		var coords = toScreenSpace(point[0]);
+		canvas.moveTo(coords[0], coords[1]);
+		coords = toScreenSpace(point[1]);
+		canvas.lineTo(coords[0], coords[1]);
+		coords = toScreenSpace(point[2]);
+		canvas.lineTo(coords[0], coords[1]);
+		coords = toScreenSpace(point[3]);
+		canvas.lineTo(coords[0], coords[1]);
+		canvas.closePath(); // make line to first point
+		canvas.fill();
+		canvas.stroke();
+	}
+
+	function grayScale(a) {
+		return 'rgba(' + a + ',' + a + ',' + a +',1)';  // white
+	}
+
+	function drawTile(x, y, z) {
 		var size = 40;
 		var height = 40;
-		xp = x * size * 2 - y * size * 2;
-		yp = x * size + y * size;
-		canvas.fillStyle    = '#eeeeee';  // gray
-		canvas.beginPath(); // top
-		canvas.moveTo(xp, yp);
-		canvas.lineTo(xp + size * 2, yp + size);
-		canvas.lineTo(xp, yp + size * 2);
-		canvas.lineTo(xp - size * 2, yp + size);
-		canvas.closePath(); // make line to first point
-		canvas.fill();
+		if ((x + y) % 2 > 0.5) {
+			canvas.fillStyle    = grayScale(240 + z * 10);  // gray
+		} else {
+			canvas.fillStyle    = grayScale(230 + z * 10);  // gray
+		}
+		canvas.strokeStyle = canvas.fillStyle;
+		drawQuad([
+			[x, y, z], [x + 1, y, z],
+			[x + 1, y + 1, z], [x, y + 1, z]
+		]);
 		canvas.fillStyle    = '#cccccc';  // gray
-		canvas.beginPath(); // side 1
-		canvas.moveTo(xp + size * 2, yp + size);
-		canvas.lineTo(xp, yp + size * 2);
-		canvas.lineTo(xp, yp + size * 2 + height);
-		canvas.lineTo(xp + size * 2, yp + size + height);
-		canvas.closePath(); // make line to first point
-		canvas.fill();
+		// side 1
+		drawQuad([
+			[x + 1, y, z], [x + 1, y + 1, z], [x + 1, y + 1, -1], [x + 1, y, -1]
+		]);
 		canvas.fillStyle    = '#dddddd';  // gray
-		canvas.beginPath(); // side 2
-		canvas.moveTo(xp - size * 2, yp + size);
-		canvas.lineTo(xp, yp + size * 2);
-		canvas.lineTo(xp, yp + size * 2 + height);
-		canvas.lineTo(xp - size * 2, yp + size + height);
-		canvas.closePath(); // make line to first point
+		// side 2
+		drawQuad([
+			[x, y + 1, z], [x + 1, y + 1, z], [x + 1, y + 1, -1], [x, y + 1, -1]
+		]);
 		canvas.fill();
 	}
 	function render() {
 		// clear
-		canvas.clearRect ( 0, 0, width, height);
+		canvas.fillStyle    = '#000000';  // black
+		canvas.fillRect ( 0, 0, width, height);
 		// map
 		for(var i = 0; i < 16; i ++) {
 			for(var j = 0; j < 16; j ++) {
-				if (map[i * 16 + j] == 1) {
-					drawTile(i, j);
+				if (map[i * 16 + j] > 0) {
+					drawTile(i, j, map[i * 16 + j] - 1);
 				}
 			}
 		}
 		// colors of default paint
 		canvas.strokeStyle    = '#000000';  // red
-		canvas.fillStyle= '#FF0000';  // red
-		// circle - hero
+		// hero shadow
+		canvas.fillStyle= 'rgba(0,0,0,0.2)';  // white
 		canvas.beginPath();
-		canvas.arc(player.position[0], player.position[1], player.radius, 0, 2*Math.PI);
+		// test
+		canvas.font = "20pt Arial";
+		onMap = [Math.floor(player.position[0]), Math.floor(player.position[1])];
+		canvas.fillText("coord " + onMap[0] + " " + onMap[1] +  " " + map[onMap[0] * 16 + onMap[1]], 10, 30);
+		if (map[onMap[0] * 16 + onMap[1]] >= 1) {
+			var shadowPosition = toScreenSpace([player.position[0], player.position[1], 0]);
+			canvas.arc(shadowPosition[0], shadowPosition[1], Math.max(player.radius * (2 - player.position[2]) * 0.5, 3), 0, 2*Math.PI);
+			canvas.closePath();
+			canvas.fill();
+		}
+		// circle - hero
+		canvas.fillStyle= '#FF0000';  // red
+		canvas.beginPath();
+		var heroPosition = toScreenSpace(player.position);
+		canvas.arc(heroPosition[0], heroPosition[1], player.radius, 0, 2*Math.PI);
+		canvas.closePath();
+		canvas.fill();
+		canvas.fillStyle= '#FFFFFF';  // white
+		canvas.beginPath();
+		heroPosition = toScreenSpace(player.position);
+		canvas.arc(heroPosition[0] + player.radius * 0.3, heroPosition[1] - player.radius * 0.3, player.radius * 0.2, 0, 2*Math.PI);
 		canvas.closePath();
 		canvas.fill();
 		// quad
@@ -154,7 +196,7 @@
 	}
 	function update(dt) {
 		// control
-		player.velocity = [0, 0]
+		player.velocity = [0, 0, player.velocity[2]]
 		// UP = 38
 		// DOWN = 40
 		// LEFT = 37
@@ -163,26 +205,37 @@
 		// S = 83
 		// A = 65
 		// D = 68
+		// space = 32
 		if (input.key[38] || input.key[87]) {
-			player.velocity[1] -= 100;
+			player.velocity = vAdd(player.velocity, [-1,-1, 0]);
+			//player.velocity[1] -= 100;
 		}
 		if (input.key[40] || input.key[83]) {
-			player.velocity[1] += 100;
+			player.velocity = vAdd(player.velocity, [+1,+1, 0]);
+			//player.velocity[1] += 100;
 		}
 		if (input.key[37] || input.key[65]) {
-			player.velocity[0] -= 100;
+			player.velocity = vAdd(player.velocity, [-1, 1, 0]);
+			//player.velocity[0] -= 100;
 		}
 		if (input.key[39] || input.key[68]) {
-			player.velocity[0] += 100;
+			player.velocity = vAdd(player.velocity, [ 1,-1, 0]);
+			//player.velocity[0] += 100;
+		}
+		if (input.key[32] && player.position[2] <= 0.2) {
+			player.velocity = vAdd(player.velocity, [ 0, 0, 3]);
+			//player.velocity[0] += 100;
 		}
 		// player fire
 		if (input.mouseLeft) {
 			fire(player.position, vNorm(vSub(input.mousePosition, player.position)));
 		}
+		// fall
+		player.velocity[2] -= 3 * dt;
 		
 		// angles
 		newCoord = vAdd(player.position, vMult(player.velocity, dt));
-		points = [[400, 400], [500, 400], [500, 500], [400, 500]];  // square angles
+		points = [[400, 400, 0], [500, 400, 0], [500, 500, 0], [400, 500, 0]];  // square angles
 		for(var i = 0; i < 4; i++) {
 			dist = magnitude(newCoord, points[i]);
 			if (dist <= player.radius) {
@@ -208,6 +261,10 @@
 		dist = magnitude(newCoord, [200, 400]);
 		if (dist < player.radius + 50) {
 			newCoord = vAdd(newCoord, vMult(vNorm(vSub([200, 400], newCoord)), dist - player.radius - 50));
+		}
+		if (newCoord[2] < 0.2) {
+			player.velocity[2] = 0;
+			newCoord[2] = 0.2;
 		}
 		player.position = newCoord;
 		// bullets
