@@ -9,7 +9,17 @@ function magnitude(va, vb) {
 	return Math.sqrt((va[0] - vb[0]) * (va[0] - vb[0]) + (va[1] - vb[1]) * (va[1] - vb[1]));
 }
 function vNorm(v) { // normilize
-	return vMult(v, 1 / magnitude(v, [0, 0, 0]));
+	var dist = 1 / magnitude(v, [0, 0, 0]);
+	if (dist <= 0) {
+		dist = 0.0000000001;
+	}
+	if (dist == Infinity) {
+		dist = 10000000000000;
+	}
+	if (dist == -Infinity) {
+		dist = -10000000000000;
+	}
+	return vMult(v, dist);
 }
 function vMult(v, m) { // m - float
 	return [v[0] * m, v[1] * m, v[2] * m];

@@ -55,7 +55,7 @@
 			position: [0, 0, 0],
 			velocity: [0, 0, 0],
 			life: 100,
-			radius: 20
+			radius: 0.25
 		}
 		return obj;
 	}
@@ -140,30 +140,16 @@
 		]);
 		canvas.fill();
 	}
-	function render() {
-		// clear
-		canvas.fillStyle    = '#000000';  // black
-		canvas.fillRect ( 0, 0, width, height);
-		// map
-		for(var i = 0; i < 16; i ++) {
-			for(var j = 0; j < 16; j ++) {
-				if (map[i * 16 + j] > 0) {
-					drawTile(i, j, map[i * 16 + j] - 1);
-				}
-			}
-		}
-		// colors of default paint
-		canvas.strokeStyle    = '#000000';  // red
+	function drawHero(heroOnMap) {
 		// hero shadow
 		canvas.fillStyle= 'rgba(0,0,0,0.2)';  // white
 		canvas.beginPath();
 		// test
 		canvas.font = "20pt Arial";
-		onMap = [Math.floor(player.position[0]), Math.floor(player.position[1])];
-		canvas.fillText("coord " + onMap[0] + " " + onMap[1] +  " " + map[onMap[0] * 16 + onMap[1]], 10, 30);
-		if (map[onMap[0] * 16 + onMap[1]] >= 1) {
+		canvas.fillText("coord " + heroOnMap[0] + " " + heroOnMap[1] +  " " + map[heroOnMap[0] * 16 + heroOnMap[1]], 10, 30);
+		if (map[heroOnMap[0] * 16 + heroOnMap[1]] >= 1) {
 			var shadowPosition = toScreenSpace([player.position[0], player.position[1], 0]);
-			canvas.arc(shadowPosition[0], shadowPosition[1], Math.max(player.radius * (2 - player.position[2]) * 0.5, 3), 0, 2*Math.PI);
+			canvas.arc(shadowPosition[0], shadowPosition[1], Math.max(player.radius * (2 - player.position[2]) * 0.5 * 4 * 20, 3), 0, 2*Math.PI);
 			canvas.closePath();
 			canvas.fill();
 		}
@@ -171,15 +157,33 @@
 		canvas.fillStyle= '#FF0000';  // red
 		canvas.beginPath();
 		var heroPosition = toScreenSpace(player.position);
-		canvas.arc(heroPosition[0], heroPosition[1], player.radius, 0, 2*Math.PI);
+		canvas.arc(heroPosition[0], heroPosition[1], player.radius * 4 * 20, 0, 2*Math.PI);
 		canvas.closePath();
 		canvas.fill();
 		canvas.fillStyle= '#FFFFFF';  // white
 		canvas.beginPath();
 		heroPosition = toScreenSpace(player.position);
-		canvas.arc(heroPosition[0] + player.radius * 0.3, heroPosition[1] - player.radius * 0.3, player.radius * 0.2, 0, 2*Math.PI);
+		canvas.arc(heroPosition[0] + player.radius * 0.3 * 4 * 20, heroPosition[1] - player.radius * 0.3 * 4 * 20, player.radius * 0.2 * 4 * 20, 0, 2*Math.PI);
 		canvas.closePath();
 		canvas.fill();
+	}
+	function render() {
+		// clear
+		canvas.fillStyle    = '#000000';  // black
+		canvas.fillRect ( 0, 0, width, height);
+		var heroOnMap = [Math.floor(player.position[0]), Math.floor(player.position[1])];
+		var heroVisOnMap = [Math.floor(player.position[0] + player.radius * 0.95), Math.floor(player.position[1] + player.radius * 0.95)];
+		// map
+		for(var i = 0; i < 16; i ++) {
+			for(var j = 0; j < 16; j ++) {
+				if (map[i * 16 + j] > 0) {
+					drawTile(i, j, map[i * 16 + j] - 1);
+				}
+				if (heroVisOnMap[0] == i && heroVisOnMap[1] == j) {
+					drawHero(heroOnMap);
+				}
+			}
+		}
 		// quad
 		canvas.strokeRect ( 400, 400, 100, 100);
 		// circle
@@ -232,10 +236,43 @@
 		}
 		// fall
 		player.velocity[2] -= 3 * dt;
-		
-		// angles
+		// add velocity
 		newCoord = vAdd(player.position, vMult(player.velocity, dt));
-		points = [[400, 400, 0], [500, 400, 0], [500, 500, 0], [400, 500, 0]];  // square angles
+		
+		// collision of circle with quad - is collision with 4 angle and 2 AABB rects
+		// check angles
+		for(var i = 0; i < 16; i ++) {
+			for(var j = 0; j < 16; j ++) {
+				if (map[i * 16 + j] > 1) {
+					var points = [[i, j, 0], [i + 1, j, 0], [i + 1, j + 1, 0], [i, j + 1, 0]];
+					for(var a = 0; a < 4; a++) {
+						var dist = magnitude(newCoord, points[a]);
+						if (dist <= player.radius) {
+							var corrector = vNorm(vSub(points[a], newCoord));
+							corrector[2] = 0;
+							newCoord = vAdd(newCoord, vMult(corrector, dist - player.radius));
+						}
+					}	
+					//sides
+					if (vInRect(newCoord, [i - player.radius, j, i + 1 + player.radius, j + 1])) {
+						if (newCoord[0] < i + 0.5) {
+							newCoord[0] = i - player.radius;
+						} else {
+							newCoord[0] = i + 1 + player.radius;
+						}
+					}
+					if (vInRect(newCoord, [i, j - player.radius, i + 1, j + 1 + player.radius])) {
+						if (newCoord[1] < j + 0.5) {
+							newCoord[1] = j - player.radius;
+						} else {
+							newCoord[1] = j + 1 + player.radius;
+						}
+					}				
+				}
+			}
+		}
+		// angles
+		var points = [[400, 400, 0], [500, 400, 0], [500, 500, 0], [400, 500, 0]];  // square angles
 		for(var i = 0; i < 4; i++) {
 			dist = magnitude(newCoord, points[i]);
 			if (dist <= player.radius) {
