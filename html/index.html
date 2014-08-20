@@ -46,7 +46,7 @@
 		width = 1024,
 		height = 768;
 	var
-		cameraPosition = [0, 0, 0];
+		cameraPosition = [8, 8, 0];
 
 
 	function GameObject() {
@@ -55,7 +55,7 @@
 			position: [0, 0, 0],
 			velocity: [0, 0, 0],
 			life: 100,
-			radius: 0.25
+			radius: 0.2
 		}
 		return obj;
 	}
@@ -89,11 +89,26 @@
 	function timestamp() {
 		return window.performance && window.performance.now ? window.performance.now() : new Date().getTime();
 	}
-	function toScreenSpace(position) { // array [x, y, z]
-		var sizeX = 70.0;
-		var sizeY = 40.0;
-		var height = 70.0;
-		return [position[0] * sizeX - position[1] * sizeX + width * 0.5, position[0] * sizeY + position[1] * sizeY - position[2] * height];
+	function getBasis(len, angle, aspect) { // aspect y / x
+		var angX = Math.sin(angle / 180 * 3.14);
+		var angY = Math.cos(angle / 180 * 3.14);
+		return [angX * len, angY * len * aspect];
+	}
+	var xBasis = [70, 40];
+	var yBasis = [40, -70];
+	var basisAngle = 45;
+	var aspect = 1.5 / 3;
+	xBasis = getBasis(70, basisAngle - 90, aspect);
+	yBasis = getBasis(70, basisAngle, aspect);
+	function toScreenSpace(objectPosition) { // array [x, y, z]
+		var zHeight = 50.0;
+		var position = vSub(objectPosition, cameraPosition);
+		//var x = position[0] * xBasis[0] + position[1] * yBasis[0];
+		//var y = position[0] * xBasis[1] + position[1] * yBasis[1];
+		//return [x * (1 + y / height * 0.5) + width * 0.5, y - position[2] * zHeight * (1 + y / height * 0.5) + height * 0.5];
+		var x = position[0] * xBasis[0] + position[1] * yBasis[0];
+		var y = position[0] * xBasis[1] + position[1] * yBasis[1];
+		return [x + width * 0.5, y - position[2] * zHeight + height * 0.5];
 	}
 
 	function drawQuad(point) { // array 4 of [x, y, z]
@@ -149,7 +164,7 @@
 		canvas.fillText("coord " + heroOnMap[0] + " " + heroOnMap[1] +  " " + map[heroOnMap[0] * 16 + heroOnMap[1]], 10, 30);
 		if (map[heroOnMap[0] * 16 + heroOnMap[1]] >= 1) {
 			var shadowPosition = toScreenSpace([player.position[0], player.position[1], 0]);
-			canvas.arc(shadowPosition[0], shadowPosition[1], Math.max(player.radius * (2 - player.position[2]) * 0.5 * 4 * 20, 3), 0, 2*Math.PI);
+			canvas.arc(shadowPosition[0], shadowPosition[1], Math.max(player.radius * (2 - player.position[2]) * 0.5 * 5 * 20, 3), 0, 2*Math.PI);
 			canvas.closePath();
 			canvas.fill();
 		}
@@ -157,13 +172,13 @@
 		canvas.fillStyle= '#FF0000';  // red
 		canvas.beginPath();
 		var heroPosition = toScreenSpace(player.position);
-		canvas.arc(heroPosition[0], heroPosition[1], player.radius * 4 * 20, 0, 2*Math.PI);
+		canvas.arc(heroPosition[0], heroPosition[1], player.radius * 5 * 20, 0, 2*Math.PI);
 		canvas.closePath();
 		canvas.fill();
 		canvas.fillStyle= '#FFFFFF';  // white
 		canvas.beginPath();
 		heroPosition = toScreenSpace(player.position);
-		canvas.arc(heroPosition[0] + player.radius * 0.3 * 4 * 20, heroPosition[1] - player.radius * 0.3 * 4 * 20, player.radius * 0.2 * 4 * 20, 0, 2*Math.PI);
+		canvas.arc(heroPosition[0] + player.radius * 0.3 * 5 * 20, heroPosition[1] - player.radius * 0.3 * 5 * 20, player.radius * 0.2 * 5 * 20, 0, 2*Math.PI);
 		canvas.closePath();
 		canvas.fill();
 	}
@@ -172,7 +187,7 @@
 		canvas.fillStyle    = '#000000';  // black
 		canvas.fillRect ( 0, 0, width, height);
 		var heroOnMap = [Math.floor(player.position[0]), Math.floor(player.position[1])];
-		var heroVisOnMap = [Math.floor(player.position[0] + player.radius * 0.95), Math.floor(player.position[1] + player.radius * 0.95)];
+		var heroVisOnMap = [Math.floor(player.position[0] + player.radius), Math.floor(player.position[1] + player.radius)];
 		// map
 		for(var i = 0; i < 16; i ++) {
 			for(var j = 0; j < 16; j ++) {
@@ -185,12 +200,12 @@
 			}
 		}
 		// quad
-		canvas.strokeRect ( 400, 400, 100, 100);
+		//canvas.strokeRect ( 400, 400, 100, 100);
 		// circle
-		canvas.beginPath();
-		canvas.arc(200, 400, 50, 0, 2*Math.PI);
-		canvas.closePath();
-		canvas.stroke();
+		//canvas.beginPath();
+		//canvas.arc(200, 400, 50, 0, 2*Math.PI);
+		//canvas.closePath();
+		//canvas.stroke();
 		// bullets
 		for(var i = 0; i < 200; i++) {
 			if (bullet[i].active) {
@@ -219,16 +234,44 @@
 			//player.velocity[1] += 100;
 		}
 		if (input.key[37] || input.key[65]) {
-			player.velocity = vAdd(player.velocity, [-1, 1, 0]);
+			player.velocity = vAdd(player.velocity, [ 1,-1, 0]);
 			//player.velocity[0] -= 100;
 		}
 		if (input.key[39] || input.key[68]) {
-			player.velocity = vAdd(player.velocity, [ 1,-1, 0]);
+			player.velocity = vAdd(player.velocity, [-1, 1, 0]);
 			//player.velocity[0] += 100;
 		}
 		if (input.key[32] && player.position[2] <= 0.2) {
 			player.velocity = vAdd(player.velocity, [ 0, 0, 3]);
 			//player.velocity[0] += 100;
+		}
+		if (input.key[88]) { //X
+			basisAngle += 1;
+			xBasis = getBasis(70, basisAngle - 90, aspect);
+			yBasis = getBasis(70, basisAngle, aspect);
+			console.log(xBasis);
+			console.log(yBasis);
+		}
+		if (input.key[90]) { //Z
+			basisAngle -= 1;
+			xBasis = getBasis(70, basisAngle - 90, aspect);
+			yBasis = getBasis(70, basisAngle, aspect);
+			console.log(xBasis);
+			console.log(yBasis);
+		}
+		if (input.key[67]) { //C
+			aspect += 0.01;
+			xBasis = getBasis(70, basisAngle - 90, aspect);
+			yBasis = getBasis(70, basisAngle, aspect);
+			console.log(xBasis);
+			console.log(yBasis);
+		}
+		if (input.key[86]) { //V
+			aspect -= 0.01;
+			xBasis = getBasis(70, basisAngle - 90, aspect);
+			yBasis = getBasis(70, basisAngle, aspect);
+			console.log(xBasis);
+			console.log(yBasis);
 		}
 		// player fire
 		if (input.mouseLeft) {
