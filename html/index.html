@@ -29,15 +29,15 @@
 				0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,
 				0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,
 				0,0,1,1,1,0,0,0,0,0,1,1,1,0,0,0,
-				0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,
-				0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,
-				0,1,1,0,0,1,0,0,0,1,1,0,0,1,0,0,
-				1,1,1,0,1,0,0,0,1,1,1,0,1,0,0,0,
-				0,0,0,1,1,1,0,0,0,0,0,1,1,1,0,0,
-				0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,
-				0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,
-				0,0,1,1,1,0,0,0,0,0,1,1,1,0,0,0,
-				0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0];
+				1,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,
+				2,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,
+				3,1,1,0,0,1,0,0,0,1,1,0,0,1,0,0,
+				3,3,2,0,1,0,0,0,1,1,1,0,1,0,0,0,
+				4,3,2,1,1,1,0,0,0,0,0,1,1,1,0,0,
+				4,3,2,0,0,0,0,0,0,1,0,0,0,0,0,0,
+				6,3,3,1,0,0,0,0,0,0,0,1,0,0,0,0,
+				5,3,3,2,1,1,0,0,0,0,1,1,1,0,0,0,
+				4,3,3,2,0,1,0,0,0,0,0,1,0,0,0,0];
 	var now,
 		dt = 0,
 		time = timestamp(),
@@ -69,7 +69,8 @@
 
 	var input = Input(rect, canvasElement);
 	var player = GameObject();
-	player.position = [3, 3, 0.3];
+	var playerCanJump = false;
+	player.position = [3, 3, 2];
 	var bullet = [200];
 	for(var i = 0; i < 200; i++) {
 		bullet[i] = GameObject();
@@ -133,6 +134,21 @@
 	function drawTile(x, y, z, bottom) {
 		var size = 40;
 		var height = 40;
+		canvas.fillStyle    = '#bbbbbb';  // gray
+		canvas.fillStyle    = grayScale(180 + (x + y) % 2 * 20 - (x + y) % 3 * 8);  // gray
+		canvas.strokeStyle = canvas.fillStyle;
+		// side 1
+		drawQuad([
+			[x + 1, y, z], [x + 1, y + 1, z], [x + 1, y + 1, bottom], [x + 1, y, bottom]
+		]);
+		canvas.fillStyle    = '#cccccc';  // gray
+		canvas.fillStyle    = grayScale(160 + (x + y) % 2 * 20 - (x + y) % 3 * 8);  // gray
+		canvas.strokeStyle = canvas.fillStyle;
+		// side 2
+		drawQuad([
+			[x, y + 1, z], [x + 1, y + 1, z], [x + 1, y + 1, bottom], [x, y + 1, bottom]
+		]);
+		// top
 		if ((x + y) % 2 > 0.5) {
 			canvas.fillStyle    = grayScale(240 + z * 10);  // gray
 		} else {
@@ -143,19 +159,6 @@
 			[x, y, z], [x + 1, y, z],
 			[x + 1, y + 1, z], [x, y + 1, z]
 		]);
-		canvas.fillStyle    = '#bbbbbb';  // gray
-		canvas.strokeStyle = canvas.fillStyle;
-		// side 1
-		drawQuad([
-			[x + 1, y, z], [x + 1, y + 1, z], [x + 1, y + 1, bottom], [x + 1, y, bottom]
-		]);
-		canvas.fillStyle    = '#cccccc';  // gray
-		canvas.strokeStyle = canvas.fillStyle;
-		// side 2
-		drawQuad([
-			[x, y + 1, z], [x + 1, y + 1, z], [x + 1, y + 1, bottom], [x, y + 1, bottom]
-		]);
-		canvas.fill();
 	}
 	function drawHero(heroOnMap) {
 		// hero shadow
@@ -165,8 +168,9 @@
 		//canvas.font = "20pt Arial";
 		//canvas.fillText("coord " + heroOnMap[0] + " " + heroOnMap[1] +  " " + map[heroOnMap[0] * 16 + heroOnMap[1]], 10, 30);
 		if (map[heroOnMap[0] * 16 + heroOnMap[1]] >= 1) {
-			var shadowPosition = toScreenSpace([player.position[0], player.position[1], 0]);
-			canvas.arc(shadowPosition[0], shadowPosition[1], Math.max(player.radius * (2 - player.position[2]) * 0.5 * 5 * 20, 3), 0, 2*Math.PI);
+			var mapHeight = map[heroOnMap[0] * 16 + heroOnMap[1]] * 0.5;
+			var shadowPosition = toScreenSpace([player.position[0], player.position[1], mapHeight]);
+			canvas.arc(shadowPosition[0], shadowPosition[1], Math.max(player.radius * (2 - (player.position[2] - mapHeight)) * 0.5 * 5 * 20, 3), 0, 2*Math.PI);
 			canvas.closePath();
 			canvas.fill();
 		}
@@ -194,20 +198,13 @@
 		for(var i = 0; i < 16; i ++) {
 			for(var j = 0; j < 16; j ++) {
 				if (map[i * 16 + j] > 0) {
-					drawTile(i, j, map[i * 16 + j] * 0.5 - 0.5, ((i % 3 + j % 5) % 7 + 1) * -0.34);
+					drawTile(i, j, map[i * 16 + j] * 0.5, ((i % 3 + j % 5) % 7 + 1) * -0.34);
 				}
 				if (heroVisOnMap[0] == i && heroVisOnMap[1] == j) {
 					drawHero(heroOnMap);
 				}
 			}
 		}
-		// quad
-		//canvas.strokeRect ( 400, 400, 100, 100);
-		// circle
-		//canvas.beginPath();
-		//canvas.arc(200, 400, 50, 0, 2*Math.PI);
-		//canvas.closePath();
-		//canvas.stroke();
 		// bullets
 		for(var i = 0; i < 200; i++) {
 			if (bullet[i].active) {
@@ -243,8 +240,9 @@
 			player.velocity = vAdd(player.velocity, [-1, 1, 0]);
 			//player.velocity[0] += 100;
 		}
-		if (input.key[32] && player.position[2] <= 0.2) {
+		if (input.key[32] && playerCanJump) {
 			player.velocity = vAdd(player.velocity, [ 0, 0, 3]);
+			playerCanJump = false;
 			//player.velocity[0] += 100;
 		}
 		if (input.key[88]) { //X
@@ -285,68 +283,126 @@
 		newCoord = vAdd(player.position, vMult(player.velocity, dt));
 		
 		// collision of circle with quad - is collision with 4 angle and 2 AABB rects
-		// check angles
-		for(var i = 0; i < 16; i ++) {
-			for(var j = 0; j < 16; j ++) {
-				if (map[i * 16 + j] > 1) {
-					var points = [[i, j, 0], [i + 1, j, 0], [i + 1, j + 1, 0], [i, j + 1, 0]];
-					for(var a = 0; a < 4; a++) {
-						var dist = magnitude(newCoord, points[a]);
-						if (dist <= player.radius) {
-							var corrector = vNorm(vSub(points[a], newCoord));
-							corrector[2] = 0;
-							newCoord = vAdd(newCoord, vMult(corrector, dist - player.radius));
-						}
-					}	
-					//sides
-					if (vInRect(newCoord, [i - player.radius, j, i + 1 + player.radius, j + 1])) {
-						if (newCoord[0] < i + 0.5) {
-							newCoord[0] = i - player.radius;
-						} else {
-							newCoord[0] = i + 1 + player.radius;
-						}
+		var heroOnMap = [Math.floor(player.position[0]), Math.floor(player.position[1])];
+		for(var i = Math.max(0, heroOnMap[0] - 1); i <= heroOnMap[0] + 1 && i < 16; i ++) {
+			for(var j = Math.max(0, heroOnMap[1] - 1); j <= heroOnMap[1] + 1 && j < 16; j ++) {
+				var mapHeight = map[i * 16 + j] * 0.5 + 0.2;
+				var corrector = [0, 0, 0];
+				var collide = false;
+				var points = [[i, j, 0], [i + 1, j, 0], [i + 1, j + 1, 0], [i, j + 1, 0]];
+				for(var a = 0; a < 4; a++) {
+					var dist = magnitude(newCoord, points[a]);
+					if (dist <= player.radius) {
+						corrector = vNorm(vSub(points[a], newCoord));
+						corrector[2] = 0;
+						corrector = vMult(corrector, dist - player.radius);
+						collide = true;
 					}
-					if (vInRect(newCoord, [i, j - player.radius, i + 1, j + 1 + player.radius])) {
-						if (newCoord[1] < j + 0.5) {
-							newCoord[1] = j - player.radius;
-						} else {
-							newCoord[1] = j + 1 + player.radius;
-						}
-					}				
+				}	
+				//sides
+				if (vInRect(newCoord, [i - player.radius, j, i + 1 + player.radius, j + 1])) {
+					corrector[1] = 0;
+					collide = true;
+					if (newCoord[0] < i + 0.5) {
+						corrector[0] = i - player.radius - newCoord[0];
+					} else {
+						corrector[0] = i + 1 + player.radius - newCoord[0];
+					}
+				}
+				if (vInRect(newCoord, [i, j - player.radius, i + 1, j + 1 + player.radius])) {
+					corrector[0] = 0;
+					collide = true;
+					if (newCoord[1] < j + 0.5) {
+						corrector[1] = j - player.radius - newCoord[1];
+					} else {
+						corrector[1] = j + 1 + player.radius - newCoord[1];
+					}
+				}
+				if (collide && mapHeight >= newCoord[2] && mapHeight <= player.position[2]) { // fall on tile - stay on its top
+					player.velocity[2] = 0;
+					playerCanJump = true;
+					newCoord[2] = mapHeight;
+					collide = false;
+					console.log("stay on " + i + " : " + j + " tile");
+				} 
+			}
+		}
+	
+		for(var i = Math.max(0, heroOnMap[0] - 1); i <= heroOnMap[0] + 1 && i < 16; i ++) {
+			for(var j = Math.max(0, heroOnMap[1] - 1); j <= heroOnMap[1] + 1 && j < 16; j ++) {
+				var mapHeight = map[i * 16 + j] * 0.5 + 0.2;
+				var corrector = [0, 0, 0];
+				var collide = false;
+				var points = [[i, j, 0], [i + 1, j, 0], [i + 1, j + 1, 0], [i, j + 1, 0]];
+				for(var a = 0; a < 4; a++) {
+					var dist = magnitude(newCoord, points[a]);
+					if (dist <= player.radius) {
+						corrector = vNorm(vSub(points[a], newCoord));
+						corrector[2] = 0;
+						corrector = vMult(corrector, dist - player.radius);
+						collide = true;
+					}
+				}	
+				//sides
+				if (vInRect(newCoord, [i - player.radius, j, i + 1 + player.radius, j + 1])) {
+					corrector[1] = 0;
+					collide = true;
+					collideH = mapHeight;
+					if (newCoord[0] < i + 0.5) {
+						corrector[0] = i - player.radius - newCoord[0];
+					} else {
+						corrector[0] = i + 1 + player.radius - newCoord[0];
+					}
+				}
+				if (vInRect(newCoord, [i, j - player.radius, i + 1, j + 1 + player.radius])) {
+					corrector[0] = 0;
+					collide = true;
+					if (newCoord[1] < j + 0.5) {
+						corrector[1] = j - player.radius - newCoord[1];
+					} else {
+						corrector[1] = j + 1 + player.radius - newCoord[1];
+					}
+				}
+				if (collide && mapHeight > newCoord[2]) { // collide in tile - correct position to move out from this
+					newCoord = vAdd(newCoord, corrector);
 				}
 			}
 		}
-		// angles
-		var points = [[400, 400, 0], [500, 400, 0], [500, 500, 0], [400, 500, 0]];  // square angles
-		for(var i = 0; i < 4; i++) {
-			dist = magnitude(newCoord, points[i]);
-			if (dist <= player.radius) {
-				newCoord = vAdd(newCoord, vMult(vNorm(vSub(points[i], newCoord)), dist - player.radius));
-			}
-		}
-		//sides
-		if (vInRect(newCoord, [400 - player.radius, 400, 500 + player.radius, 500])) {
-			if (newCoord[0] < 450) {
-				newCoord[0] = 400 - player.radius;
-			} else {
-				newCoord[0] = 500 + player.radius;
-			}
-		}
-		if (vInRect(newCoord, [400, 400 - player.radius, 500, 500 + player.radius])) {
-			if (newCoord[1] < 450) {
-				newCoord[1] = 400 - player.radius;
-			} else {
-				newCoord[1] = 500 + player.radius;
-			}
-		}
-		// circle
-		dist = magnitude(newCoord, [200, 400]);
-		if (dist < player.radius + 50) {
-			newCoord = vAdd(newCoord, vMult(vNorm(vSub([200, 400], newCoord)), dist - player.radius - 50));
-		}
+		
+		//for(var i = 0; i < 16; i ++) {
+		//	for(var j = 0; j < 16; j ++) {
+		//		if (map[i * 16 + j] > 1) {
+		//			var points = [[i, j, 0], [i + 1, j, 0], [i + 1, j + 1, 0], [i, j + 1, 0]];
+		//			for(var a = 0; a < 4; a++) {
+		//				var dist = magnitude(newCoord, points[a]);
+		//				if (dist <= player.radius) {
+		//					var corrector = vNorm(vSub(points[a], newCoord));
+		//					corrector[2] = 0;
+		//					newCoord = vAdd(newCoord, vMult(corrector, dist - player.radius));
+		//				}
+		//			}	
+		//			//sides
+		//			if (vInRect(newCoord, [i - player.radius, j, i + 1 + player.radius, j + 1])) {
+		//				if (newCoord[0] < i + 0.5) {
+		//					newCoord[0] = i - player.radius;
+		//				} else {
+		//					newCoord[0] = i + 1 + player.radius;
+		//				}
+		//			}
+		//			if (vInRect(newCoord, [i, j - player.radius, i + 1, j + 1 + player.radius])) {
+		//				if (newCoord[1] < j + 0.5) {
+		//					newCoord[1] = j - player.radius;
+		//				} else {
+		//					newCoord[1] = j + 1 + player.radius;
+		//				}
+		//			}				
+		//		}
+		//	}
+		//}
 		if (newCoord[2] < 0.2) {
 			player.velocity[2] = 0;
 			newCoord[2] = 0.2;
+			playerCanJump = true;
 		}
 		player.position = newCoord;
 		// bullets
