@@ -24,7 +24,7 @@
 	<script type="text/javascript">
 	var map = [	1,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,
 				1,2,1,0,0,1,0,0,0,1,1,0,0,1,0,0,
-				1,2,2,1,1,0,0,0,1,1,1,0,1,0,0,0,
+				1,3,2,1,1,0,0,0,1,1,1,0,1,0,0,0,
 				1,1,1,1,1,1,0,0,0,0,0,1,1,1,0,0,
 				0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,
 				0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,
@@ -96,8 +96,8 @@
 	}
 	var xBasis = [70, 40];
 	var yBasis = [40, -70];
-	var basisAngle = 45;
-	var aspect = 1.5 / 3;
+	var basisAngle = 42;
+	var aspect = 1.6 / 3;
 	xBasis = getBasis(70, basisAngle - 90, aspect);
 	yBasis = getBasis(70, basisAngle, aspect);
 	function toScreenSpace(objectPosition) { // array [x, y, z]
@@ -130,7 +130,7 @@
 		return 'rgba(' + a + ',' + a + ',' + a +',1)';  // white
 	}
 
-	function drawTile(x, y, z) {
+	function drawTile(x, y, z, bottom) {
 		var size = 40;
 		var height = 40;
 		if ((x + y) % 2 > 0.5) {
@@ -143,15 +143,17 @@
 			[x, y, z], [x + 1, y, z],
 			[x + 1, y + 1, z], [x, y + 1, z]
 		]);
-		canvas.fillStyle    = '#cccccc';  // gray
+		canvas.fillStyle    = '#bbbbbb';  // gray
+		canvas.strokeStyle = canvas.fillStyle;
 		// side 1
 		drawQuad([
-			[x + 1, y, z], [x + 1, y + 1, z], [x + 1, y + 1, -1], [x + 1, y, -1]
+			[x + 1, y, z], [x + 1, y + 1, z], [x + 1, y + 1, bottom], [x + 1, y, bottom]
 		]);
-		canvas.fillStyle    = '#dddddd';  // gray
+		canvas.fillStyle    = '#cccccc';  // gray
+		canvas.strokeStyle = canvas.fillStyle;
 		// side 2
 		drawQuad([
-			[x, y + 1, z], [x + 1, y + 1, z], [x + 1, y + 1, -1], [x, y + 1, -1]
+			[x, y + 1, z], [x + 1, y + 1, z], [x + 1, y + 1, bottom], [x, y + 1, bottom]
 		]);
 		canvas.fill();
 	}
@@ -160,8 +162,8 @@
 		canvas.fillStyle= 'rgba(0,0,0,0.2)';  // white
 		canvas.beginPath();
 		// test
-		canvas.font = "20pt Arial";
-		canvas.fillText("coord " + heroOnMap[0] + " " + heroOnMap[1] +  " " + map[heroOnMap[0] * 16 + heroOnMap[1]], 10, 30);
+		//canvas.font = "20pt Arial";
+		//canvas.fillText("coord " + heroOnMap[0] + " " + heroOnMap[1] +  " " + map[heroOnMap[0] * 16 + heroOnMap[1]], 10, 30);
 		if (map[heroOnMap[0] * 16 + heroOnMap[1]] >= 1) {
 			var shadowPosition = toScreenSpace([player.position[0], player.position[1], 0]);
 			canvas.arc(shadowPosition[0], shadowPosition[1], Math.max(player.radius * (2 - player.position[2]) * 0.5 * 5 * 20, 3), 0, 2*Math.PI);
@@ -192,7 +194,7 @@
 		for(var i = 0; i < 16; i ++) {
 			for(var j = 0; j < 16; j ++) {
 				if (map[i * 16 + j] > 0) {
-					drawTile(i, j, map[i * 16 + j] - 1);
+					drawTile(i, j, map[i * 16 + j] * 0.5 - 0.5, ((i % 3 + j % 5) % 7 + 1) * -0.34);
 				}
 				if (heroVisOnMap[0] == i && heroVisOnMap[1] == j) {
 					drawHero(heroOnMap);
@@ -357,6 +359,7 @@
 				}
 			}
 		}
+		cameraPosition = vAdd(vMult(cameraPosition, 0.9), vMult(vAdd(player.position, [0,0,-0.4]), 0.1));
 	}
 	function frame() {
 		now = timestamp();
