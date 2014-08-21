@@ -211,6 +211,11 @@
 				canvas.fillRect ( bullet[i].position[0] - 1, bullet[i].position[1] - 1, 2, 2);
 			}
 		}
+		// help
+		canvas.font = "14pt Arial";
+		canvas.fillText("Q / E - Rotate level", 10, 30);
+		canvas.fillText("Z / X - change height constant", 10, 50);
+		canvas.fillText("C / V - change tile aspect", 10, 70);
 	}
 	function update(dt) {
 		// control
