@@ -42,7 +42,6 @@
 		dt = 0,
 		time = timestamp(),
 		step = 1/30,
-		ballRadius = 20,
 		width = 1024,
 		height = 768;
 	var
@@ -90,18 +89,27 @@
 	function timestamp() {
 		return window.performance && window.performance.now ? window.performance.now() : new Date().getTime();
 	}
-	function getBasis(len, angle, aspect) { // aspect y / x
-		var angX = Math.sin(angle / 180 * 3.14);
-		var angY = Math.cos(angle / 180 * 3.14);
-		return [angX * len, angY * len * aspect];
-	}
 	var xBasis = [70, 40];
 	var yBasis = [40, -70];
 	var basisAngle = 42;
 	var aspect = 1.6 / 3;
 	var zHeight = 50.0;
+
+	function getBasis(len, angle, aspect) { // aspect y / x
+		var angX = Math.sin(angle / 180 * 3.14);
+		var angY = Math.cos(angle / 180 * 3.14);
+		if (basisAngle < 0) {
+			basisAngle += 360;
+		}
+		if (basisAngle >= 360) {
+			basisAngle -= 360;
+		}
+		return [angX * len, angY * len * aspect];
+	}
+
 	xBasis = getBasis(70, basisAngle - 90, aspect);
 	yBasis = getBasis(70, basisAngle, aspect);
+
 	function toScreenSpace(objectPosition) { // array [x, y, z]
 		var position = vSub(objectPosition, cameraPosition);
 		//var x = position[0] * xBasis[0] + position[1] * yBasis[0];
@@ -131,23 +139,51 @@
 		return 'rgba(' + a + ',' + a + ',' + a +',1)';  // white
 	}
 
+	function isSidePolygonFrontFace(pointA, pointB) {
+		coordA = toScreenSpace(pointA);
+		coordB = toScreenSpace(pointB);
+		return coordA[0] < coordB[0];
+	}
+
 	function drawTile(x, y, z, bottom) {
 		var size = 40;
 		var height = 40;
-		canvas.fillStyle    = '#bbbbbb';  // gray
-		canvas.fillStyle    = grayScale(180 + (x + y) % 2 * 20 - (x + y) % 3 * 8);  // gray
-		canvas.strokeStyle = canvas.fillStyle;
 		// side 1
-		drawQuad([
-			[x + 1, y, z], [x + 1, y + 1, z], [x + 1, y + 1, bottom], [x + 1, y, bottom]
-		]);
-		canvas.fillStyle    = '#cccccc';  // gray
-		canvas.fillStyle    = grayScale(160 + (x + y) % 2 * 20 - (x + y) % 3 * 8);  // gray
-		canvas.strokeStyle = canvas.fillStyle;
+		//canvas.fillStyle    = '#bbbbbb';  // gray
+		if (isSidePolygonFrontFace([x + 1, y, z], [x + 1, y + 1, z])) {
+			canvas.fillStyle    = grayScale(180 + (x + y) % 2 * 20 - (x + y) % 3 * 8);  // gray
+			canvas.strokeStyle = canvas.fillStyle;
+			drawQuad([
+				[x + 1, y, z], [x + 1, y + 1, z], [x + 1, y + 1, bottom], [x + 1, y, bottom]
+			]);
+		}
 		// side 2
-		drawQuad([
-			[x, y + 1, z], [x + 1, y + 1, z], [x + 1, y + 1, bottom], [x, y + 1, bottom]
-		]);
+		//canvas.fillStyle    = '#cccccc';  // gray
+		if (isSidePolygonFrontFace([x + 1, y + 1, z], [x, y + 1, z])) {
+			canvas.fillStyle    = grayScale(160 + (x + y) % 2 * 20 - (x + y) % 3 * 8);  // gray
+			canvas.strokeStyle = canvas.fillStyle;
+			drawQuad([
+				[x + 1, y + 1, z], [x, y + 1, z], [x, y + 1, bottom], [x + 1, y + 1, bottom]
+			]);
+		}
+		// side 3
+		//canvas.fillStyle    = '#cccccc';  // gray
+		if (isSidePolygonFrontFace([x, y + 1, z], [x, y, z])) {
+			canvas.fillStyle    = grayScale(180 + (x + y) % 2 * 20 - (x + y) % 3 * 8);  // gray
+			canvas.strokeStyle = canvas.fillStyle;
+			drawQuad([
+				[x, y + 1, z], [x, y, z], [x, y, bottom], [x, y + 1, bottom]
+			]);
+		}
+		// side 4
+		//canvas.fillStyle    = '#cccccc';  // gray
+		if (isSidePolygonFrontFace([x, y, z], [x + 1, y, z])) {
+			canvas.fillStyle    = grayScale(160 + (x + y) % 2 * 20 - (x + y) % 3 * 8);  // gray
+			canvas.strokeStyle = canvas.fillStyle;
+			drawQuad([
+				[x, y, z], [x + 1, y, z], [x + 1, y, bottom], [x, y, bottom]
+			]);
+		}
 		// top
 		if ((x + y) % 2 > 0.5) {
 			canvas.fillStyle    = grayScale(240 + z * 10);  // gray
@@ -197,10 +233,19 @@
 		// map
 		for(var i = 0; i < 16; i ++) {
 			for(var j = 0; j < 16; j ++) {
-				if (map[i * 16 + j] > 0) {
-					drawTile(i, j, map[i * 16 + j] * 0.5, ((i % 3 + j % 5) % 7 + 1) * -0.34);
+				var x = i;
+				var y = j;
+				// for sort order
+				if (basisAngle > 180) {
+					x = 15 - i;
 				}
-				if (heroVisOnMap[0] == i && heroVisOnMap[1] == j) {
+				if (basisAngle > 90 && basisAngle < 270) {
+					y = 15 - j;
+				}
+				if (map[x * 16 + y] > 0) {
+					drawTile(x, y, map[x * 16 + y] * 0.5, ((x % 3 + y % 5) % 7 + 1) * -0.34);
+				}
+				if (heroVisOnMap[0] == x && heroVisOnMap[1] == y) {
 					drawHero(heroOnMap);
 				}
 			}
@@ -216,6 +261,7 @@
 		canvas.fillText("Q / E - Rotate level", 10, 30);
 		canvas.fillText("Z / X - change height constant", 10, 50);
 		canvas.fillText("C / V - change tile aspect", 10, 70);
+		canvas.fillText("Camera angle " + basisAngle, 10, 90);
 	}
 	function update(dt) {
 		// control
