@@ -200,24 +200,33 @@
 	function drawHero(heroOnMap) {
 		// hero shadow
 		canvas.fillStyle= 'rgba(0,0,0,0.2)';  // white
+		canvas.strokeStyle= 'rgba(0,0,0,0.0)';  // white
 		canvas.beginPath();
 		// test
 		//canvas.font = "20pt Arial";
 		//canvas.fillText("coord " + heroOnMap[0] + " " + heroOnMap[1] +  " " + map[heroOnMap[0] * 16 + heroOnMap[1]], 10, 30);
-		if (map[heroOnMap[0] * 16 + heroOnMap[1]] > 0) {
-			var mapHeight = map[heroOnMap[0] * 16 + heroOnMap[1]] * 0.5;
-			var minX = Math.max(heroOnMap[0], player.position[0] - player.radius);
-			var maxX = Math.min(heroOnMap[0] + 1, player.position[0] + player.radius);
-			var minY = Math.max(heroOnMap[1], player.position[1] - player.radius);
-			var maxY = Math.min(heroOnMap[1] + 1, player.position[1] + player.radius);
-			var shadowPosition = toScreenSpace([player.position[0], player.position[1], mapHeight]);
-			//canvas.arc(shadowPosition[0], shadowPosition[1], Math.max(player.radius * (2 - (player.position[2] - mapHeight)) * 0.5 * 5 * 20, 3), 0, 2*Math.PI);
-			//canvas.closePath();
-			drawQuad([
-				[minX, minY, mapHeight], [maxX, minY, mapHeight],
-				[maxX, maxY, mapHeight], [minX, maxY, mapHeight]
-			]);
-			canvas.fill();
+		var positionOnMap = [Math.floor(player.position[0] - 0.5), Math.floor(player.position[1] - 0.5)];
+		for (var i = 0; i < 2; i ++) {
+			for (var j = 0; j < 2; j ++) {
+				var heroOnMap = [positionOnMap[0] + i, positionOnMap[1] + j];
+				if (map[heroOnMap[0] * 16 + heroOnMap[1]] > 0) {
+					var mapHeight = map[heroOnMap[0] * 16 + heroOnMap[1]] * 0.5;
+					var minX = player.position[0] - player.radius;
+					var maxX = player.position[0] + player.radius;
+					var minY = player.position[1] - player.radius;
+					var maxY = player.position[1] + player.radius;
+					minX = Math.max(heroOnMap[0], Math.min(heroOnMap[0] + 1, minX));
+					maxX = Math.max(heroOnMap[0], Math.min(heroOnMap[0] + 1, maxX));
+					minY = Math.max(heroOnMap[1], Math.min(heroOnMap[1] + 1, minY));
+					maxY = Math.max(heroOnMap[1], Math.min(heroOnMap[1] + 1, maxY));
+					var shadowPosition = toScreenSpace([player.position[0], player.position[1], mapHeight]);
+					drawQuad([
+						[minX, minY, mapHeight], [maxX, minY, mapHeight],
+						[maxX, maxY, mapHeight], [minX, maxY, mapHeight]
+					]);
+					canvas.fill();
+				}
+			}
 		}
 		// circle - hero
 		canvas.fillStyle= '#FF0000';  // red
@@ -237,7 +246,6 @@
 		// clear
 		canvas.fillStyle    = '#000000';  // black
 		canvas.fillRect ( 0, 0, width, height);
-		var heroOnMap = [Math.floor(player.position[0]), Math.floor(player.position[1])];
 		var heroVisOnMap = [Math.floor(player.position[0] + player.radius), Math.floor(player.position[1] + player.radius)];
 		// map
 		for(var i = 0; i < 16; i ++) {
@@ -255,7 +263,7 @@
 					drawTile(x, y, map[x * 16 + y] * 0.5, ((x % 3 + y % 5) % 7 + 1) * -0.34);
 				}
 				if (heroVisOnMap[0] == x && heroVisOnMap[1] == y) {
-					drawHero(heroOnMap);
+					drawHero();
 				}
 			}
 		}
