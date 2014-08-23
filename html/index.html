@@ -121,16 +121,14 @@
 		return [x + width * 0.5, y - position[2] * zHeight + height * 0.5];
 	}
 
-	function drawQuad(point) { // array 4 of [x, y, z]
+	function drawProjectedPolygon(point) { // array 4 of [x, y, z]
 		canvas.beginPath(); // top
 		var coords = toScreenSpace(point[0]);
 		canvas.moveTo(coords[0], coords[1]);
-		coords = toScreenSpace(point[1]);
-		canvas.lineTo(coords[0], coords[1]);
-		coords = toScreenSpace(point[2]);
-		canvas.lineTo(coords[0], coords[1]);
-		coords = toScreenSpace(point[3]);
-		canvas.lineTo(coords[0], coords[1]);
+		for(var i = 1; i < point.length; i++) {
+			coords = toScreenSpace(point[i]);
+			canvas.lineTo(coords[0], coords[1]);
+		}
 		canvas.closePath(); // make line to first point
 		canvas.fill();
 		canvas.stroke();
@@ -154,7 +152,7 @@
 		if (isSidePolygonFrontFace([x + 1, y, z], [x + 1, y + 1, z])) {
 			canvas.fillStyle    = grayScale(180 + (x + y) % 2 * 20 - (x + y) % 3 * 8);  // gray
 			canvas.strokeStyle = canvas.fillStyle;
-			drawQuad([
+			drawProjectedPolygon([
 				[x + 1, y, z], [x + 1, y + 1, z], [x + 1, y + 1, bottom], [x + 1, y, bottom]
 			]);
 		}
@@ -163,7 +161,7 @@
 		if (isSidePolygonFrontFace([x + 1, y + 1, z], [x, y + 1, z])) {
 			canvas.fillStyle    = grayScale(160 + (x + y) % 2 * 20 - (x + y) % 3 * 8);  // gray
 			canvas.strokeStyle = canvas.fillStyle;
-			drawQuad([
+			drawProjectedPolygon([
 				[x + 1, y + 1, z], [x, y + 1, z], [x, y + 1, bottom], [x + 1, y + 1, bottom]
 			]);
 		}
@@ -172,7 +170,7 @@
 		if (isSidePolygonFrontFace([x, y + 1, z], [x, y, z])) {
 			canvas.fillStyle    = grayScale(180 + (x + y) % 2 * 20 - (x + y) % 3 * 8);  // gray
 			canvas.strokeStyle = canvas.fillStyle;
-			drawQuad([
+			drawProjectedPolygon([
 				[x, y + 1, z], [x, y, z], [x, y, bottom], [x, y + 1, bottom]
 			]);
 		}
@@ -181,7 +179,7 @@
 		if (isSidePolygonFrontFace([x, y, z], [x + 1, y, z])) {
 			canvas.fillStyle    = grayScale(160 + (x + y) % 2 * 20 - (x + y) % 3 * 8);  // gray
 			canvas.strokeStyle = canvas.fillStyle;
-			drawQuad([
+			drawProjectedPolygon([
 				[x, y, z], [x + 1, y, z], [x + 1, y, bottom], [x, y, bottom]
 			]);
 		}
@@ -192,10 +190,14 @@
 			canvas.fillStyle    = grayScale(230 + z * 10);  // gray
 		}
 		canvas.strokeStyle = canvas.fillStyle;
-		drawQuad([
+		drawProjectedPolygon([
 			[x, y, z], [x + 1, y, z],
 			[x + 1, y + 1, z], [x, y + 1, z]
 		]);
+	}
+	var shadowPoints = [16];
+	for(var i = 0; i < 16; i ++) {
+		shadowPoints[i] = [Math.cos(i * 22 / 180 * 3.14), Math.sin(i * 22 / 180 * 3.14)];// 22 = 360 / 16
 	}
 	function drawHero(heroOnMap) {
 		// hero shadow
@@ -211,19 +213,14 @@
 				var heroOnMap = [positionOnMap[0] + i, positionOnMap[1] + j];
 				if (map[heroOnMap[0] * 16 + heroOnMap[1]] > 0) {
 					var mapHeight = map[heroOnMap[0] * 16 + heroOnMap[1]] * 0.5;
-					var minX = player.position[0] - player.radius;
-					var maxX = player.position[0] + player.radius;
-					var minY = player.position[1] - player.radius;
-					var maxY = player.position[1] + player.radius;
-					minX = Math.max(heroOnMap[0], Math.min(heroOnMap[0] + 1, minX));
-					maxX = Math.max(heroOnMap[0], Math.min(heroOnMap[0] + 1, maxX));
-					minY = Math.max(heroOnMap[1], Math.min(heroOnMap[1] + 1, minY));
-					maxY = Math.max(heroOnMap[1], Math.min(heroOnMap[1] + 1, maxY));
-					var shadowPosition = toScreenSpace([player.position[0], player.position[1], mapHeight]);
-					drawQuad([
-						[minX, minY, mapHeight], [maxX, minY, mapHeight],
-						[maxX, maxY, mapHeight], [minX, maxY, mapHeight]
-					]);
+					var shadow = [8];
+					for(var z = 0; z < shadowPoints.length; z++) {
+						shadow[z] = [
+							Math.max(heroOnMap[0], Math.min(heroOnMap[0] + 1, player.position[0] + shadowPoints[z][0] * player.radius)),
+							Math.max(heroOnMap[1], Math.min(heroOnMap[1] + 1, player.position[1] + shadowPoints[z][1] * player.radius)),
+							mapHeight];
+					}
+					drawProjectedPolygon(shadow);
 					canvas.fill();
 				}
 			}
@@ -311,21 +308,16 @@
 		if (input.key[32] && playerCanJump) {
 			player.velocity = vAdd(player.velocity, [ 0, 0, 3]);
 			playerCanJump = false;
-			//player.velocity[0] += 100;
 		}
 		if (input.key[69]) { //E 
 			basisAngle += 1;
 			xBasis = getBasis(70, basisAngle - 90, aspect);
 			yBasis = getBasis(70, basisAngle, aspect);
-			console.log(xBasis);
-			console.log(yBasis);
 		}
 		if (input.key[81]) { //Q 
 			basisAngle -= 1;
 			xBasis = getBasis(70, basisAngle - 90, aspect);
 			yBasis = getBasis(70, basisAngle, aspect);
-			console.log(xBasis);
-			console.log(yBasis);
 		}
 		if (input.key[67]) { //C
 			aspect += 0.01;
@@ -334,8 +326,6 @@
 			}
 			xBasis = getBasis(70, basisAngle - 90, aspect);
 			yBasis = getBasis(70, basisAngle, aspect);
-			console.log(xBasis);
-			console.log(yBasis);
 		}
 		if (input.key[86]) { //V
 			aspect -= 0.01;
@@ -344,8 +334,6 @@
 			}
 			xBasis = getBasis(70, basisAngle - 90, aspect);
 			yBasis = getBasis(70, basisAngle, aspect);
-			console.log(xBasis);
-			console.log(yBasis);
 		}
 		if (input.key[88]) { //X
 			zHeight += 0.5;
@@ -354,8 +342,6 @@
 			}
 			xBasis = getBasis(70, basisAngle - 90, aspect);
 			yBasis = getBasis(70, basisAngle, aspect);
-			console.log(xBasis);
-			console.log(yBasis);
 		}
 		if (input.key[90]) { //Z
 			zHeight -= 0.5;
@@ -364,8 +350,6 @@
 			}
 			xBasis = getBasis(70, basisAngle - 90, aspect);
 			yBasis = getBasis(70, basisAngle, aspect);
-			console.log(xBasis);
-			console.log(yBasis);
 		}
 		// player fire
 		if (input.mouseLeft) {
@@ -418,7 +402,6 @@
 						playerCanJump = true;
 						newCoord[2] = mapHeight;
 						collide = false;
-						console.log("stay on " + i + " : " + j + " tile");
 					}
 				}
 			}
