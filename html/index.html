@@ -229,13 +229,13 @@
 		canvas.fillStyle= '#FF0000';  // red
 		canvas.beginPath();
 		var heroPosition = toScreenSpace(player.position);
-		canvas.arc(heroPosition[0], heroPosition[1], player.radius * 5 * 20, 0, 2*Math.PI);
+		canvas.arc(heroPosition[0], heroPosition[1], player.radius * 4 * 20, 0, 2*Math.PI);
 		canvas.closePath();
 		canvas.fill();
 		canvas.fillStyle= '#FFFFFF';  // white
 		canvas.beginPath();
 		heroPosition = toScreenSpace(player.position);
-		canvas.arc(heroPosition[0] + player.radius * 0.3 * 5 * 20, heroPosition[1] - player.radius * 0.3 * 5 * 20, player.radius * 0.2 * 5 * 20, 0, 2*Math.PI);
+		canvas.arc(heroPosition[0] + player.radius * 0.3 * 4 * 20, heroPosition[1] - player.radius * 0.3 * 4 * 20, player.radius * 0.2 * 4 * 20, 0, 2*Math.PI);
 		canvas.closePath();
 		canvas.fill();
 	}
