@@ -194,38 +194,43 @@
 			[x, y, z], [x + 1, y, z],
 			[x + 1, y + 1, z], [x, y + 1, z]
 		]);
+		// hero shadow
+		drawHeroShadow(x, y, z);
 	}
 	var shadowPoints = [16];
 	for(var i = 0; i < 16; i ++) {
 		shadowPoints[i] = [Math.cos(i * 22 / 180 * 3.14), Math.sin(i * 22 / 180 * 3.14)];// 22 = 360 / 16
 	}
+	function drawHeroShadow(x, y, z) {
+		if (z < 0) {
+			return;
+		}
+		var xPlayer = Math.floor(player.position[0] - 0.5);
+		var yPlayer = Math.floor(player.position[1] - 0.5);
+		if ((x == xPlayer || x == xPlayer + 1) && (y == yPlayer || y == yPlayer + 1)) {
+			// hero shadow
+			canvas.fillStyle = 'rgba(0,0,0,0.2)';  // white
+			canvas.strokeStyle = 'rgba(0,0,0,0.0)';  // white
+			var heroOnMap = [x, y];
+			if (map[heroOnMap[0] * 16 + heroOnMap[1]] > 0) {
+				var mapHeight = map[heroOnMap[0] * 16 + heroOnMap[1]] * 0.5;
+				var shadowRadius = player.radius * (1.0 + (mapHeight - player.position[2]) * 0.14);
+				var shadow = [8];
+				for(var z = 0; z < shadowPoints.length; z++) {
+					shadow[z] = [
+						Math.max(heroOnMap[0], Math.min(heroOnMap[0] + 1, player.position[0] + shadowPoints[z][0] * shadowRadius)),
+						Math.max(heroOnMap[1], Math.min(heroOnMap[1] + 1, player.position[1] + shadowPoints[z][1] * shadowRadius)),
+						mapHeight];
+				}
+				drawProjectedPolygon(shadow);
+				canvas.fill();
+			}
+		}
+	}
 	function drawHero(heroOnMap) {
-		// hero shadow
-		canvas.fillStyle= 'rgba(0,0,0,0.2)';  // white
-		canvas.strokeStyle= 'rgba(0,0,0,0.0)';  // white
-		canvas.beginPath();
 		// test
 		//canvas.font = "20pt Arial";
 		//canvas.fillText("coord " + heroOnMap[0] + " " + heroOnMap[1] +  " " + map[heroOnMap[0] * 16 + heroOnMap[1]], 10, 30);
-		var positionOnMap = [Math.floor(player.position[0] - 0.5), Math.floor(player.position[1] - 0.5)];
-		for (var i = 0; i < 2; i ++) {
-			for (var j = 0; j < 2; j ++) {
-				var heroOnMap = [positionOnMap[0] + i, positionOnMap[1] + j];
-				if (map[heroOnMap[0] * 16 + heroOnMap[1]] > 0) {
-					var mapHeight = map[heroOnMap[0] * 16 + heroOnMap[1]] * 0.5;
-					var shadowRadius = player.radius * (1.0 + (mapHeight - player.position[2]) * 0.14);
-					var shadow = [8];
-					for(var z = 0; z < shadowPoints.length; z++) {
-						shadow[z] = [
-							Math.max(heroOnMap[0], Math.min(heroOnMap[0] + 1, player.position[0] + shadowPoints[z][0] * shadowRadius)),
-							Math.max(heroOnMap[1], Math.min(heroOnMap[1] + 1, player.position[1] + shadowPoints[z][1] * shadowRadius)),
-							mapHeight];
-					}
-					drawProjectedPolygon(shadow);
-					canvas.fill();
-				}
-			}
-		}
 		// circle - hero
 		canvas.fillStyle= '#FF0000';  // red
 		canvas.beginPath();
