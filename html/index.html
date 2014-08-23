@@ -70,7 +70,7 @@
 	var player = GameObject();
 	var playerCanJump = false;
 	player.position = [3.5, 3.5, 2];
-	var playerGlide = 0.4;
+	var playerGlide = 0.3;
 	var bullet = [200];
 	for(var i = 0; i < 200; i++) {
 		bullet[i] = GameObject();
@@ -213,11 +213,12 @@
 				var heroOnMap = [positionOnMap[0] + i, positionOnMap[1] + j];
 				if (map[heroOnMap[0] * 16 + heroOnMap[1]] > 0) {
 					var mapHeight = map[heroOnMap[0] * 16 + heroOnMap[1]] * 0.5;
+					var shadowRadius = player.radius * (1.0 + (mapHeight - player.position[2]) * 0.14);
 					var shadow = [8];
 					for(var z = 0; z < shadowPoints.length; z++) {
 						shadow[z] = [
-							Math.max(heroOnMap[0], Math.min(heroOnMap[0] + 1, player.position[0] + shadowPoints[z][0] * player.radius)),
-							Math.max(heroOnMap[1], Math.min(heroOnMap[1] + 1, player.position[1] + shadowPoints[z][1] * player.radius)),
+							Math.max(heroOnMap[0], Math.min(heroOnMap[0] + 1, player.position[0] + shadowPoints[z][0] * shadowRadius)),
+							Math.max(heroOnMap[1], Math.min(heroOnMap[1] + 1, player.position[1] + shadowPoints[z][1] * shadowRadius)),
 							mapHeight];
 					}
 					drawProjectedPolygon(shadow);
