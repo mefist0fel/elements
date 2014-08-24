@@ -214,7 +214,7 @@
 			var heroOnMap = [x, y];
 			if (map[heroOnMap[0] * 16 + heroOnMap[1]] > 0) {
 				var mapHeight = map[heroOnMap[0] * 16 + heroOnMap[1]] * 0.5;
-				var shadowRadius = player.radius * (1.0 + (mapHeight - player.position[2]) * 0.14);
+				var shadowRadius = player.radius * (1.0 - Math.max(0, player.position[2] - mapHeight) * 0.14);
 				var shadow = [8];
 				for(var z = 0; z < shadowPoints.length; z++) {
 					shadow[z] = [
@@ -235,13 +235,13 @@
 		canvas.fillStyle= '#FF0000';  // red
 		canvas.beginPath();
 		var heroPosition = toScreenSpace(player.position);
-		canvas.arc(heroPosition[0], heroPosition[1], player.radius * 4 * 20, 0, 2*Math.PI);
+		canvas.arc(heroPosition[0], heroPosition[1], player.radius * 4 * 18, 0, 2*Math.PI);
 		canvas.closePath();
 		canvas.fill();
 		canvas.fillStyle= '#FFFFFF';  // white
 		canvas.beginPath();
 		heroPosition = toScreenSpace(player.position);
-		canvas.arc(heroPosition[0] + player.radius * 0.3 * 4 * 20, heroPosition[1] - player.radius * 0.3 * 4 * 20, player.radius * 0.2 * 4 * 20, 0, 2*Math.PI);
+		canvas.arc(heroPosition[0] + player.radius * 0.3 * 4 * 18, heroPosition[1] - player.radius * 0.3 * 4 * 18, player.radius * 0.2 * 4 * 18, 0, 2*Math.PI);
 		canvas.closePath();
 		canvas.fill();
 	}
