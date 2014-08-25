@@ -70,10 +70,19 @@
 	var player = GameObject();
 	var playerCanJump = false;
 	player.position = [3.5, 3.5, 2];
-	var playerGlide = 0.3;
+	var playerHover = 0.3;
+	var hoverTime = 0;
 	var bullet = [200];
 	for(var i = 0; i < 200; i++) {
 		bullet[i] = GameObject();
+	}
+
+	function animateHover(dt) {
+		hoverTime += dt;
+		if (hoverTime > 1.8) {
+			hoverTime = 0;
+		}
+		playerHover = Math.sin(hoverTime / 1.8 * 3.14 * 2) * 0.06 + 0.4;
 	}
 
 	function fire(position, velocity) {
@@ -227,20 +236,19 @@
 			}
 		}
 	}
-	function drawHero(heroOnMap) {
+	function drawHero() {
 		// test
 		//canvas.font = "20pt Arial";
 		//canvas.fillText("coord " + heroOnMap[0] + " " + heroOnMap[1] +  " " + map[heroOnMap[0] * 16 + heroOnMap[1]], 10, 30);
 		// circle - hero
 		canvas.fillStyle= '#FF0000';  // red
 		canvas.beginPath();
-		var heroPosition = toScreenSpace(player.position);
+		var heroPosition = toScreenSpace(vAdd(player.position, [0,0,playerHover]));
 		canvas.arc(heroPosition[0], heroPosition[1], player.radius * 4 * 18, 0, 2*Math.PI);
 		canvas.closePath();
 		canvas.fill();
 		canvas.fillStyle= '#FFFFFF';  // white
 		canvas.beginPath();
-		heroPosition = toScreenSpace(player.position);
 		canvas.arc(heroPosition[0] + player.radius * 0.3 * 4 * 18, heroPosition[1] - player.radius * 0.3 * 4 * 18, player.radius * 0.2 * 4 * 18, 0, 2*Math.PI);
 		canvas.closePath();
 		canvas.fill();
@@ -249,7 +257,25 @@
 		// clear
 		canvas.fillStyle    = '#000000';  // black
 		canvas.fillRect ( 0, 0, width, height);
-		var heroVisOnMap = [Math.floor(player.position[0] + player.radius), Math.floor(player.position[1] + player.radius)];
+		var heroVisOnMap = [Math.floor(player.position[0]), Math.floor(player.position[1])];
+		if (basisAngle > 180) {
+			if (map[Math.floor(player.position[0] - player.radius) * 16 + Math.floor(player.position[1])] * 0.5 <= player.position[2] ) {
+				heroVisOnMap[0] -= 1;
+			}
+		} else {
+			if (map[Math.floor(player.position[0] + player.radius) * 16 + Math.floor(player.position[1])] * 0.5 <= player.position[2] ) {
+				heroVisOnMap[0] += 1;
+			}
+		}
+		if (basisAngle > 90 && basisAngle < 270) {
+			if (map[Math.floor(player.position[0]) * 16 + Math.floor(player.position[1] - player.radius)] * 0.5 <= player.position[2] ) {
+				heroVisOnMap[1] -= 1;                                                  
+			}                                                                          
+		} else {                                                                       
+			if (map[Math.floor(player.position[0]) * 16 + Math.floor(player.position[1] + player.radius)] * 0.5 <= player.position[2] ) {
+				heroVisOnMap[1] += 1;
+			}
+		}
 		// map
 		for(var i = 0; i < 16; i ++) {
 			for(var j = 0; j < 16; j ++) {
@@ -284,6 +310,7 @@
 		canvas.fillText("Camera angle " + basisAngle, 10, 90);
 	}
 	function update(dt) {
+		animateHover(dt);
 		// control
 		player.velocity = [0, 0, player.velocity[2]]
 		// UP = 38
@@ -371,7 +398,7 @@
 		for(var i = Math.max(0, heroOnMap[0] - 1); i <= heroOnMap[0] + 1 && i < 16; i ++) {
 			for(var j = Math.max(0, heroOnMap[1] - 1); j <= heroOnMap[1] + 1 && j < 16; j ++) {
 				if (map[i * 16 + j] > 0) {
-					var mapHeight = map[i * 16 + j] * 0.5 + playerGlide;
+					var mapHeight = map[i * 16 + j] * 0.5;// + playerHover;
 					var corrector = [0, 0, 0];
 					var collide = false;
 					var points = [[i, j, 0], [i + 1, j, 0], [i + 1, j + 1, 0], [i, j + 1, 0]];
@@ -416,7 +443,7 @@
 		for(var i = Math.max(0, heroOnMap[0] - 1); i <= heroOnMap[0] + 1 && i < 16; i ++) {
 			for(var j = Math.max(0, heroOnMap[1] - 1); j <= heroOnMap[1] + 1 && j < 16; j ++) {
 				if (map[i * 16 + j] > 0) {
-					var mapHeight = map[i * 16 + j] * 0.5 + playerGlide;
+					var mapHeight = map[i * 16 + j] * 0.5;// + playerHover;
 					var corrector = [0, 0, 0];
 					var collide = false;
 					var points = [[i, j, 0], [i + 1, j, 0], [i + 1, j + 1, 0], [i, j + 1, 0]];
