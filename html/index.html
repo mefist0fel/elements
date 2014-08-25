@@ -72,6 +72,25 @@
 	player.position = [3.5, 3.5, 2];
 	var playerHover = 0.3;
 	var hoverTime = 0;
+	var moveDirection = [];
+
+	function getAngleVector(angle, multiplier) {
+		var angX = Math.sin(angle / 180 * 3.14);
+		var angY = Math.cos(angle / 180 * 3.14);
+		return [angX * multiplier, angY * multiplier, 0];
+	}
+	function setMoveDirection(cameraAngle) {
+		// UP
+		// DOWN 
+		// LEFT 
+		// RIGHT
+		moveDirection = [
+			getAngleVector(cameraAngle + 180, 1.8),
+			getAngleVector(cameraAngle + 0, 1.8),
+			getAngleVector(cameraAngle + 90, 1.8),
+			getAngleVector(cameraAngle + 270, 1.8)
+		];
+	}
 	var bullet = [200];
 	for(var i = 0; i < 200; i++) {
 		bullet[i] = GameObject();
@@ -114,6 +133,7 @@
 		if (basisAngle >= 360) {
 			basisAngle -= 360;
 		}
+		setMoveDirection(basisAngle);
 		return [angX * len, angY * len * aspect];
 	}
 
@@ -127,7 +147,9 @@
 		//return [x * (1 + y / height * 0.5) + width * 0.5, y - position[2] * zHeight * (1 + y / height * 0.5) + height * 0.5];
 		var x = position[0] * xBasis[0] + position[1] * yBasis[0];
 		var y = position[0] * xBasis[1] + position[1] * yBasis[1];
-		return [x + width * 0.5, y - position[2] * zHeight + height * 0.5];
+		//perspective = 0.5 + (y / (height * 0.5) * 0.5);
+		//return [(x + width * 0.5) * 1, (y + height * 0.5) * perspective - position[2] * zHeight];
+		return [x + width * 0.5, y + height * 0.5 - position[2] * zHeight];
 	}
 
 	function drawProjectedPolygon(point) { // array 4 of [x, y, z]
@@ -323,19 +345,19 @@
 		// D = 68
 		// space = 32
 		if (input.key[38] || input.key[87]) {
-			player.velocity = vAdd(player.velocity, [-1,-1, 0]);
+			player.velocity = vAdd(player.velocity, moveDirection[0]);
 			//player.velocity[1] -= 100;
 		}
 		if (input.key[40] || input.key[83]) {
-			player.velocity = vAdd(player.velocity, [+1,+1, 0]);
+			player.velocity = vAdd(player.velocity, moveDirection[1]);
 			//player.velocity[1] += 100;
 		}
 		if (input.key[37] || input.key[65]) {
-			player.velocity = vAdd(player.velocity, [ 1,-1, 0]);
+			player.velocity = vAdd(player.velocity, moveDirection[2]);
 			//player.velocity[0] -= 100;
 		}
 		if (input.key[39] || input.key[68]) {
-			player.velocity = vAdd(player.velocity, [-1, 1, 0]);
+			player.velocity = vAdd(player.velocity, moveDirection[3]);
 			//player.velocity[0] += 100;
 		}
 		if (input.key[32] && playerCanJump) {
