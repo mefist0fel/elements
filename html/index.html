@@ -147,8 +147,8 @@
 		//return [x * (1 + y / height * 0.5) + width * 0.5, y - position[2] * zHeight * (1 + y / height * 0.5) + height * 0.5];
 		var x = position[0] * xBasis[0] + position[1] * yBasis[0];
 		var y = position[0] * xBasis[1] + position[1] * yBasis[1];
-		//perspective = 0.5 + (y / (height * 0.5) * 0.5);
-		//return [(x + width * 0.5) * 1, (y + height * 0.5) * perspective - position[2] * zHeight];
+		//perspective = 0.9 + (y / (height * 0.5) * 0.1);
+		//return [(x * perspective + width * 0.5), (y * perspective + height * 0.5) - position[2] * zHeight];
 		return [x + width * 0.5, y + height * 0.5 - position[2] * zHeight];
 	}
 
