@@ -11,7 +11,9 @@ function Camera() {
 		aspect: 1.6 / 3, 		// x / y aspect isometric 
 		basis: [[70, 40], [40, -70]], // instead of projection matrix - 2 vector. Enougth for isometric view
 		height: 50.0, // 50 - 1 unit height in pixels
+		unit: 70,
 		recalculateBasis: function(unitSize) {
+			this.unit = unitSize;
 			this.basis[0] = getBasis(unitSize, this.angle - 90, this.aspect);
 			this.basis[1] = getBasis(unitSize, this.angle, this.aspect);
 		}
@@ -19,19 +21,6 @@ function Camera() {
 	camera.recalculateBasis(70); // 70 - 1 unit lenght in pixels.
 	return camera;
 }
-
-	//var
-	//	cameraPosition = [8, 8, 0];
-	//var xBasis = [70, 40];
-	//var yBasis = [40, -70];
-	//var basisAngle = 42;
-	//var aspect = 1.6 / 3;
-	//var zHeight = 50.0;
-    //
-    //
-	//xBasis = getBasis(70, basisAngle - 90, aspect);
-	//yBasis = getBasis(70, basisAngle, aspect);
-
 
 	function toScreenSpace(objectPosition) { // array [x, y, z]
 		var position = vSub(objectPosition, camera.position);
