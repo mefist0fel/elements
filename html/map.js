@@ -19,60 +19,63 @@ function cell(x, y) {
 	return map[x * 16 + y] * 0.5;
 }
 
-	function grayScale(a) {
-		return 'rgba(' + a + ',' + a + ',' + a +',1)';  // white
-	}
+function grayScale(a) {
+	return 'rgba(' + a + ',' + a + ',' + a +',1)';  // white
+}
 
-	function isSidePolygonFrontFace(pointA, pointB) {
-		coordA = toScreenSpace(pointA);
-		coordB = toScreenSpace(pointB);
-		return coordA[0] < coordB[0];
-	}
+function isSidePolygonFrontFace(pointA, pointB) {
+	coordA = toScreenSpace(pointA);
+	coordB = toScreenSpace(pointB);
+	return coordA[0] < coordB[0];
+}
 
-	function drawMapTile(x, y, z, bottom) {
-		var size = 40;
-		var height = 40;
-		// side 1
-		if (isSidePolygonFrontFace([x + 1, y, z], [x + 1, y + 1, z])) {
-			canvas.fillStyle    = grayScale(180 + (x + y) % 2 * 20 - (x + y) % 3 * 8);  // gray
-			canvas.strokeStyle = canvas.fillStyle;
-			drawProjectedPolygon([
-				[x + 1, y, z], [x + 1, y + 1, z], [x + 1, y + 1, bottom], [x + 1, y, bottom]
-			]);
-		}
-		// side 2
-		if (isSidePolygonFrontFace([x + 1, y + 1, z], [x, y + 1, z])) {
-			canvas.fillStyle    = grayScale(160 + (x + y) % 2 * 20 - (x + y) % 3 * 8);  // gray
-			canvas.strokeStyle = canvas.fillStyle;
-			drawProjectedPolygon([
-				[x + 1, y + 1, z], [x, y + 1, z], [x, y + 1, bottom], [x + 1, y + 1, bottom]
-			]);
-		}
-		// side 3
-		if (isSidePolygonFrontFace([x, y + 1, z], [x, y, z])) {
-			canvas.fillStyle    = grayScale(180 + (x + y) % 2 * 20 - (x + y) % 3 * 8);  // gray
-			canvas.strokeStyle = canvas.fillStyle;
-			drawProjectedPolygon([
-				[x, y + 1, z], [x, y, z], [x, y, bottom], [x, y + 1, bottom]
-			]);
-		}
-		// side 4
-		if (isSidePolygonFrontFace([x, y, z], [x + 1, y, z])) {
-			canvas.fillStyle    = grayScale(160 + (x + y) % 2 * 20 - (x + y) % 3 * 8);  // gray
-			canvas.strokeStyle = canvas.fillStyle;
-			drawProjectedPolygon([
-				[x, y, z], [x + 1, y, z], [x + 1, y, bottom], [x, y, bottom]
-			]);
-		}
-		// top
-		if ((x + y) % 2 > 0.5) {
-			canvas.fillStyle    = grayScale(240 + z * 10);  // gray
-		} else {
-			canvas.fillStyle    = grayScale(230 + z * 10);  // gray
-		}
+function drawMapTile(x, y, z, bottom) {
+	var point = [
+		[x, y, z], [x + 1, y, z],
+		[x + 1, y + 1, z], [x, y + 1, z], // top
+		[x, y, bottom], [x + 1, y, bottom],
+		[x + 1, y + 1, bottom], [x, y + 1, bottom] // bottom
+	]
+	// side 1
+	if (isSidePolygonFrontFace(point[1], point[2])) {
+		canvas.fillStyle    = grayScale(180 + (x + y) % 2 * 20 - (x + y) % 3 * 8);  // gray
 		canvas.strokeStyle = canvas.fillStyle;
 		drawProjectedPolygon([
-			[x, y, z], [x + 1, y, z],
-			[x + 1, y + 1, z], [x, y + 1, z]
+			point[1], point[2], point[6], point[5]
 		]);
 	}
+	// side 2
+	if (isSidePolygonFrontFace([x + 1, y + 1, z], [x, y + 1, z])) {
+		canvas.fillStyle    = grayScale(160 + (x + y) % 2 * 20 - (x + y) % 3 * 8);  // gray
+		canvas.strokeStyle = canvas.fillStyle;
+		drawProjectedPolygon([
+			point[2], point[3], point[7], point[6]
+		]);
+	}
+	// side 3
+	if (isSidePolygonFrontFace([x, y + 1, z], [x, y, z])) {
+		canvas.fillStyle    = grayScale(180 + (x + y) % 2 * 20 - (x + y) % 3 * 8);  // gray
+		canvas.strokeStyle = canvas.fillStyle;
+		drawProjectedPolygon([
+			point[3], point[0], point[4], point[7]
+		]);
+	}
+	// side 4
+	if (isSidePolygonFrontFace([x, y, z], [x + 1, y, z])) {
+		canvas.fillStyle    = grayScale(160 + (x + y) % 2 * 20 - (x + y) % 3 * 8);  // gray
+		canvas.strokeStyle = canvas.fillStyle;
+		drawProjectedPolygon([
+			point[0], point[1], point[5], point[4]
+		]);
+	}
+	// top
+	if ((x + y) % 2 > 0.5) {
+		canvas.fillStyle    = grayScale(240 + z * 10);  // gray
+	} else {
+		canvas.fillStyle    = grayScale(230 + z * 10);  // gray
+	}
+	canvas.strokeStyle = canvas.fillStyle;
+	drawProjectedPolygon([
+		point[0], point[1], point[2], point[3]
+	]);
+}

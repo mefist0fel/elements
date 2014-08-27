@@ -246,6 +246,8 @@
 			playerCanJump = false;
 			playSound([0,,0.1812,,0.1349,0.4524,,0.2365,,,,,,0.0819,,,,,1,,,,,0.5]);
 		}
+		// camera control
+		// TODO kill them
 		if (input.key[69]) { //E 
 			camera.angle += 1;
 			camera.recalculateBasis(70);
@@ -288,10 +290,12 @@
 			camera.recalculateBasis(70);
 			setMoveDirection(camera.angle);
 		}
+		// TODO kill it later
 		// player fire
 		if (input.mouseLeft) {
 			fire(player.position, vNorm(vSub(input.mousePosition, player.position)));
 		}
+		
 		// fall
 		player.velocity[2] -= 3 * dt;
 		// add velocity
@@ -392,6 +396,7 @@
 			playerCanJump = true;
 		}
 		player.position = newCoord;
+		// TODO kill it
 		// bullets
 		for(var i = 0; i < 200; i++) {
 			if (bullet[i].active) {

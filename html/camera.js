@@ -4,6 +4,16 @@ function getBasis(len, angle, aspect) { // aspect y / x
 	return [angX * len, angY * len * aspect];
 }
 
+function cutAngle(angle) {
+	if (angle < 0) {
+		angle += 360;
+	}
+	if (angle >= 360) {
+		angle -= 360;
+	}
+	return angle;
+}
+
 function Camera() {
 	var camera = {
 		position: [0, 0, 0],
@@ -14,6 +24,7 @@ function Camera() {
 		unit: 70,
 		recalculateBasis: function(unitSize) {
 			this.unit = unitSize;
+			this.angle = cutAngle(this.angle);
 			this.basis[0] = getBasis(unitSize, this.angle - 90, this.aspect);
 			this.basis[1] = getBasis(unitSize, this.angle, this.aspect);
 		}
