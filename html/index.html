@@ -22,9 +22,10 @@
 	<script type="text/javascript" src="geometry.js"></script>
 	<script type="text/javascript" src="input.js"></script>
 	<script type="text/javascript" src="camera.js"></script>
-	<script type="text/javascript" src="map.js"></script>
 	<script type="text/javascript" src="jsfxr.js"></script>
 	<script type="text/javascript" src="audio.js"></script>
+	<script type="text/javascript" src="map.js"></script>
+	<script type="text/javascript" src="hero.js"></script>
 	<script type="text/javascript">
 	var now,
 		dt = 0,
@@ -32,18 +33,6 @@
 		step = 1/30,
 		width = 1024,
 		height = 768;
-
-
-	function GameObject() {
-		var obj = {
-			active: false,
-			position: [0, 0, 0],
-			velocity: [0, 0, 0],
-			life: 100,
-			radius: 0.2
-		}
-		return obj;
-	}
 
 	// init
 	var canvasElement = document.getElementById('tutorial');
@@ -54,106 +43,30 @@
 
 	var input = Input(rect, canvasElement);
 	var camera = Camera();
-	var player = GameObject();
-	var playerCanJump = false;
+	var player = Hero();
 	player.position = [3.5, 3.5, 2];
-	var playerHover = 0.3;
-	var hoverTime = 0;
-	var moveDirection = [];
-
-	function getAngleVector(angle, multiplier) {
-		var angX = Math.sin(angle / 180 * 3.14);
-		var angY = Math.cos(angle / 180 * 3.14);
-		return [angX * multiplier, angY * multiplier, 0];
-	}
-	function setMoveDirection(cameraAngle) {
-		// UP
-		// DOWN 
-		// LEFT 
-		// RIGHT
-		moveDirection = [
-			getAngleVector(camera.angle + 180, 1.8),
-			getAngleVector(camera.angle + 0, 1.8),
-			getAngleVector(camera.angle + 90, 1.8),
-			getAngleVector(camera.angle + 270, 1.8)
-		];
-	}
 	setMoveDirection(45);//(camera.angle);
-	var bullet = [200];
-	for(var i = 0; i < 200; i++) {
-		bullet[i] = GameObject();
-	}
 
-	function animateHover(dt) {
-		hoverTime += dt;
-		if (hoverTime > 1.8) {
-			hoverTime = 0;
-		}
-		playerHover = Math.sin(hoverTime / 1.8 * 3.14 * 2) * 0.06 + 0.4;
-	}
+	//var bullet = [200];
+	//for(var i = 0; i < 200; i++) {
+	//	bullet[i] = GameObject();
+	//}
 
-	function fire(position, velocity) {
-		for(var i = 0; i < 200; i++) {
-			if (!bullet[i].active) {
-				bullet[i].active = true;
-				bullet[i].position = position;
-				bullet[i].velocity = vMult(vAdd(velocity, [Math.random() * 0.1 - 0.05, Math.random() * 0.1 - 0.05, 0]), 400);
-				bullet[i].life = 3; // 3 sec life
-				break;
-			}
-		}
-	}
+	//function fire(position, velocity) {
+	//	for(var i = 0; i < 200; i++) {
+	//		if (!bullet[i].active) {
+	//			bullet[i].active = true;
+	//			bullet[i].position = position;
+	//			bullet[i].velocity = vMult(vAdd(velocity, [Math.random() * 0.1 - 0.05, Math.random() * 0.1 - 0.05, 0]), 400);
+	//			bullet[i].life = 3; // 3 sec life
+	//			break;
+	//		}
+	//	}
+	//}
 	function timestamp() {
 		return window.performance && window.performance.now ? window.performance.now() : new Date().getTime();
 	}
 
-	var shadowPoints = [16];
-	for(var i = 0; i < 16; i ++) {
-		shadowPoints[i] = [Math.cos(i * 22 / 180 * 3.14), Math.sin(i * 22 / 180 * 3.14)];// 22 = 360 / 16
-	}
-	function drawHeroShadow(x, y, z) {
-		if (z <= 0 || player.position[2] < z) {
-			return;
-		}
-		var xPlayer = Math.floor(player.position[0] - 0.5);
-		var yPlayer = Math.floor(player.position[1] - 0.5);
-		if ((x == xPlayer || x == xPlayer + 1) && (y == yPlayer || y == yPlayer + 1)) {
-			// hero shadow
-			canvas.fillStyle = 'rgba(0,0,0,0.2)';  // white
-			canvas.strokeStyle = 'rgba(0,0,0,0.0)';  // white
-			var heroOnMap = [x, y];
-			if (cell(heroOnMap[0], heroOnMap[1]) > 0) {
-				var mapHeight = cell(heroOnMap[0], heroOnMap[1]);
-				var shadowRadius = player.radius * (1.0 - Math.max(0, player.position[2] - mapHeight) * 0.14);
-				var shadow = [8];
-				for(var z = 0; z < shadowPoints.length; z++) {
-					shadow[z] = [
-						Math.max(heroOnMap[0], Math.min(heroOnMap[0] + 1, player.position[0] + shadowPoints[z][0] * shadowRadius)),
-						Math.max(heroOnMap[1], Math.min(heroOnMap[1] + 1, player.position[1] + shadowPoints[z][1] * shadowRadius)),
-						mapHeight];
-				}
-				drawProjectedPolygon(shadow);
-				canvas.fill();
-			}
-		}
-	}
-	function drawHero() {
-		// test
-		//canvas.font = "20pt Arial";
-		//canvas.fillText("coord " + heroOnMap[0] + " " + heroOnMap[1] +  " " + cell(heroOnMap[0], heroOnMap[1]), 10, 30);
-		// circle - hero
-		canvas.fillStyle= '#FF0000';  // red
-		canvas.beginPath();
-		var heroPosition = toScreenSpace(vAdd(player.position, [0,0,playerHover]));
-		canvas.arc(heroPosition[0], heroPosition[1], player.radius * /*4 * 18*/camera.unit, 0, 2*Math.PI);
-		canvas.closePath();
-		canvas.fill();
-		canvas.fillStyle= '#FFFFFF';  // white
-		canvas.beginPath();
-		canvas.arc(heroPosition[0] + player.radius * 0.3 * /*4 * 18*/camera.unit, heroPosition[1] - player.radius * 0.3 */* 4 * 18*/camera.unit, player.radius * 0.2 * /*4 * 18*/camera.unit, 0, 2*Math.PI);
-		canvas.closePath();
-		canvas.fill();
-	}
 	function render() {
 		// clear
 		canvas.fillStyle    = '#000000';  // black
@@ -201,11 +114,11 @@
 			}
 		}
 		// bullets
-		for(var i = 0; i < 200; i++) {
-			if (bullet[i].active) {
-				canvas.fillRect ( bullet[i].position[0] - 1, bullet[i].position[1] - 1, 2, 2);
-			}
-		}
+		//for(var i = 0; i < 200; i++) {
+		//	if (bullet[i].active) {
+		//		canvas.fillRect ( bullet[i].position[0] - 1, bullet[i].position[1] - 1, 2, 2);
+		//	}
+		//}
 		// help
 		canvas.font = "14pt Arial";
 		canvas.fillText("Q / E - Rotate level", 10, 30);
@@ -214,7 +127,7 @@
 		canvas.fillText("Camera angle " + camera.angle, 10, 90);
 	}
 	function update(dt) {
-		animateHover(dt);
+		player.animate(dt);
 		// control
 		player.velocity = [0, 0, player.velocity[2]]
 		// UP = 38
@@ -293,9 +206,9 @@
 		}
 		// TODO kill it later
 		// player fire
-		if (input.mouseLeft) {
-			fire(player.position, vNorm(vSub(input.mousePosition, player.position)));
-		}
+		//if (input.mouseLeft) {
+		//	fire(player.position, vNorm(vSub(input.mousePosition, player.position)));
+		//}
 		
 		// fall
 		player.velocity[2] -= 3 * dt;
@@ -399,15 +312,15 @@
 		player.position = newCoord;
 		// TODO kill it
 		// bullets
-		for(var i = 0; i < 200; i++) {
-			if (bullet[i].active) {
-				bullet[i].position = vAdd(bullet[i].position, vMult(bullet[i].velocity, dt));
-				bullet[i].life -= dt;
-				if (bullet[i].life < 0) {
-					bullet[i].active = false;
-				}
-			}
-		}
+		//for(var i = 0; i < 200; i++) {
+		//	if (bullet[i].active) {
+		//		bullet[i].position = vAdd(bullet[i].position, vMult(bullet[i].velocity, dt));
+		//		bullet[i].life -= dt;
+		//		if (bullet[i].life < 0) {
+		//			bullet[i].active = false;
+		//		}
+		//	}
+		//}
 		camera.position = vAdd(vMult(camera.position, 0.9), vMult(vAdd(player.position, [0,0,-0.4]), 0.1));
 	}
 	function frame() {
