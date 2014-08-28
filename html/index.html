@@ -112,7 +112,7 @@
 		shadowPoints[i] = [Math.cos(i * 22 / 180 * 3.14), Math.sin(i * 22 / 180 * 3.14)];// 22 = 360 / 16
 	}
 	function drawHeroShadow(x, y, z) {
-		if (z < 0) {
+		if (z <= 0 || player.position[2] < z) {
 			return;
 		}
 		var xPlayer = Math.floor(player.position[0] - 0.5);
@@ -178,16 +178,17 @@
 			}
 		}
 		// map
-		for(var i = 0; i < 16; i ++) {
-			for(var j = 0; j < 16; j ++) {
+		var visibleRect = [Math.max(0, heroVisOnMap[0] - 20),Math.max(0, heroVisOnMap[1] - 20),Math.max(0, heroVisOnMap[0] + 20), Math.max(0, heroVisOnMap[1] + 20)]
+		for(var i = visibleRect[0]; i <= visibleRect[2]; i ++) {
+			for(var j = visibleRect[1]; j <= visibleRect[3]; j ++) {
 				var x = i;
 				var y = j;
 				// for sort order
 				if (camera.angle > 180) {
-					x = 15 - i;
+					x = visibleRect[2] - i;
 				}
 				if (camera.angle > 90 && camera.angle < 270) {
-					y = 15 - j;
+					y = visibleRect[3] - j;
 				}
 				if (cell(x, y) > 0) {
 					drawMapTile(x, y, cell(x, y), ((x % 3 + y % 5) % 7 + 1) * -0.34);
@@ -303,8 +304,8 @@
 		
 		// collision of circle with quad - is collision with 4 angle and 2 AABB rects
 		var heroOnMap = [Math.floor(player.position[0]), Math.floor(player.position[1])];
-		for(var i = Math.max(0, heroOnMap[0] - 1); i <= heroOnMap[0] + 1 && i < 16; i ++) {
-			for(var j = Math.max(0, heroOnMap[1] - 1); j <= heroOnMap[1] + 1 && j < 16; j ++) {
+		for(var i = Math.max(0, heroOnMap[0] - 1); i <= heroOnMap[0] + 1; i ++) {
+			for(var j = Math.max(0, heroOnMap[1] - 1); j <= heroOnMap[1] + 1; j ++) {
 				if (cell(i, j) > 0) {
 					var mapHeight = cell(i, j);// + playerHover;
 					var corrector = [0, 0, 0];
