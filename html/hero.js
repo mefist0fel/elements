@@ -11,7 +11,7 @@ function GameObject() {
 
 function Hero() {
 	var hero = {
-		position: [0, 0, 0],
+		position: [26.5, 26.5, 2],
 		velocity: [0, 0, 0],
 		life: 100,
 		radius: 0.2,
@@ -43,10 +43,10 @@ function setMoveDirection(cameraAngle) {
 	// LEFT 
 	// RIGHT
 	moveDirection = [
-		getAngleVector(camera.angle + 180, 1.8),
-		getAngleVector(camera.angle + 0, 1.8),
-		getAngleVector(camera.angle + 90, 1.8),
-		getAngleVector(camera.angle + 270, 1.8)
+		getAngleVector(cameraAngle + 180, 1.8),
+		getAngleVector(cameraAngle + 0, 1.8),
+		getAngleVector(cameraAngle + 90, 1.8),
+		getAngleVector(cameraAngle + 270, 1.8)
 	];
 }
 

@@ -44,7 +44,6 @@
 	var input = Input(rect, canvasElement);
 	var camera = Camera();
 	var player = Hero();
-	player.position = [3.5, 3.5, 2];
 	setMoveDirection(45);//(camera.angle);
 
 	//var bullet = [200];
@@ -72,24 +71,24 @@
 		canvas.fillStyle    = '#000000';  // black
 		canvas.fillRect ( 0, 0, width, height);
 		var heroVisOnMap = [Math.floor(player.position[0]), Math.floor(player.position[1])];
-		if (camera.angle > 180) {
-			if (cell(Math.floor(player.position[0] - player.radius), Math.floor(player.position[1])) <= player.position[2] ) {
-				heroVisOnMap[0] -= 1;
-			}
-		} else {
-			if (cell(Math.floor(player.position[0] + player.radius), Math.floor(player.position[1])) <= player.position[2] ) {
-				heroVisOnMap[0] += 1;
-			}
-		}
-		if (camera.angle > 90 && camera.angle < 270) {
-			if (cell(Math.floor(player.position[0]), Math.floor(player.position[1] - player.radius)) <= player.position[2] ) {
-				heroVisOnMap[1] -= 1;                                                  
-			}                                                                          
-		} else {                                                                       
-			if (cell(Math.floor(player.position[0]), Math.floor(player.position[1] + player.radius)) <= player.position[2] ) {
-				heroVisOnMap[1] += 1;
-			}
-		}
+		//if (camera.angle > 180) {
+		//	if (cell(Math.floor(player.position[0] - player.radius), Math.floor(player.position[1])) <= player.position[2] ) {
+		//		heroVisOnMap[0] -= 1;
+		//	}
+		//} else {
+		//	if (cell(Math.floor(player.position[0] + player.radius), Math.floor(player.position[1])) <= player.position[2] ) {
+		//		heroVisOnMap[0] += 1;
+		//	}
+		//}
+		//if (camera.angle > 90 && camera.angle < 270) {
+		//	if (cell(Math.floor(player.position[0]), Math.floor(player.position[1] - player.radius)) <= player.position[2] ) {
+		//		heroVisOnMap[1] -= 1;                                                  
+		//	}                                                                          
+		//} else {                                                                       
+		//	if (cell(Math.floor(player.position[0]), Math.floor(player.position[1] + player.radius)) <= player.position[2] ) {
+		//		heroVisOnMap[1] += 1;
+		//	}
+		//}
 		// map
 		var visibleRect = [Math.max(0, heroVisOnMap[0] - 20),Math.max(0, heroVisOnMap[1] - 20),Math.max(0, heroVisOnMap[0] + 20), Math.max(0, heroVisOnMap[1] + 20)]
 		for(var i = visibleRect[0]; i <= visibleRect[2]; i ++) {
@@ -104,7 +103,7 @@
 					y = visibleRect[3] - j;
 				}
 				if (cell(x, y) > 0) {
-					drawMapTile(x, y, cell(x, y), ((x % 3 + y % 5) % 7 + 1) * -0.34);
+					drawMapTile(x, y, cell(x, y), cellBottom(x, y), cellType(x, y));
 					// hero shadow
 					drawHeroShadow(x, y, cell(x, y));
 				}
@@ -262,8 +261,8 @@
 			}
 		}
 	
-		for(var i = Math.max(0, heroOnMap[0] - 1); i <= heroOnMap[0] + 1 && i < 16; i ++) {
-			for(var j = Math.max(0, heroOnMap[1] - 1); j <= heroOnMap[1] + 1 && j < 16; j ++) {
+		for(var i = Math.max(0, heroOnMap[0] - 1); i <= heroOnMap[0] + 1; i ++) {
+			for(var j = Math.max(0, heroOnMap[1] - 1); j <= heroOnMap[1] + 1; j ++) {
 				if (cell(i, j) > 0) {
 					var mapHeight = cell(i, j);// + playerHover;
 					var corrector = [0, 0, 0];
@@ -306,7 +305,7 @@
 		}
 		if (newCoord[2] < -5.0) { // fall
 			player.velocity[2] = 0;
-			newCoord = [3.5, 3.5, 2];
+			newCoord = [26.5, 26.5, 2];
 			playerCanJump = true;
 		}
 		player.position = newCoord;
